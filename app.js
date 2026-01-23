@@ -233,33 +233,37 @@ function hookEditListeners(){
     el.addEventListener("input", () => {
       const idx = Number(el.dataset.index);
       const field = el.dataset.field;
-      state.rows[idx][field] = el.innerHTML;
+      if(Number.isFinite(idx) && field){
+        state.rows[idx][field] = el.innerHTML;
+      }
     });
 
+    // ✅ mostra sempre no focus
     el.addEventListener("focus", () => showToolbar());
-    el.addEventListener("blur", () => {
-      setTimeout(() => {
-        if(!document.activeElement.closest?.(".toolbar")) hideToolbar();
-      }, 120);
-    });
   });
 
+  // COORD MESSAGE
   const coord = document.getElementById("coordMessage");
   if(coord && coord.getAttribute("contenteditable") === "true"){
+    coord.addEventListener("focus", () => showToolbar());
     coord.addEventListener("input", () => {
       state.coordMessage = coord.innerHTML;
     });
   }
 
+  // TEACHER
   const teacher = document.getElementById("teacherName");
   if(teacher && teacher.getAttribute("contenteditable") === "true"){
+    teacher.addEventListener("focus", () => showToolbar());
     teacher.addEventListener("input", () => {
       state.teacher = teacher.innerText.trim();
     });
   }
 
+  // DATE FIELD
   const dateField = document.getElementById("dateField");
   if(dateField && dateField.getAttribute("contenteditable") === "true"){
+    dateField.addEventListener("focus", () => showToolbar());
     dateField.addEventListener("input", () => {
       state.dateText = dateField.innerText.trim();
     });
@@ -310,6 +314,28 @@ function initToolbar(){
     });
   }
 }
+
+
+/* =========================
+  Toolbar auto hide
+========================= */
+
+function initToolbarAutoHide(){
+  document.addEventListener("pointerdown", (e) => {
+    const tb = document.getElementById("toolbar");
+    if(!tb) return;
+
+    const clickedToolbar = tb.contains(e.target);
+    const clickedRich = e.target.closest?.(".rich");
+
+    // ✅ se clicou no toolbar ou em um campo rich -> NÃO esconde
+    if(clickedToolbar || clickedRich) return;
+
+    // ✅ clicou fora -> esconde
+    hideToolbar();
+  });
+}
+
 
 /* =========================
    MODALS
@@ -684,6 +710,8 @@ function toast(text){
 async function init(){
   applyQueryState();
   initToolbar();
+  initToolbarAutoHide();
+
 
   hydrateUI();
 
