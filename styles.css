@@ -210,7 +210,7 @@ body{
 /* ✅ Badge fora da coluna Unit, Day (lado esquerdo), agora dentro do gutter */
 .day-badge{
   position:absolute;
-  left: -102px; /* ✅ joga pro gutter */
+  left: -96px; /* ✅ joga pro gutter */
   top: 0;
   height:100%;
   width: 96px;
