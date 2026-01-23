@@ -137,12 +137,12 @@ function renderRows(){
   rowsEl.innerHTML = "";
 
   state.rows.forEach((r, idx) => {
-    const row = document.createElement("div");
-    row.className = "row";
+    const tr = document.createElement("tr");
 
-    // Unit cell
+    // TD 1: Unit cell (número + pill)
+    const tdUnit = document.createElement("td");
     const unitCell = document.createElement("div");
-    unitCell.className = "cell unitCell";
+    unitCell.className = "unitCell";
 
     const dayNum = document.createElement("div");
     dayNum.className = "dayNum";
@@ -154,62 +154,60 @@ function renderRows(){
 
     unitCell.appendChild(dayNum);
     unitCell.appendChild(weekPill);
+    tdUnit.appendChild(unitCell);
 
-    // Unit, Day field
-    const c1 = document.createElement("div");
-    c1.className = "cell";
+    // TD 2: Unit, Day field
+    const td1 = document.createElement("td");
     const unit = document.createElement("div");
     unit.className = "rich";
     unit.dataset.field = "unitDay";
     unit.dataset.index = idx;
     unit.innerHTML = r.unitDay || "";
     if(!state.isViewMode) unit.contentEditable = "true";
-    c1.appendChild(unit);
+    td1.appendChild(unit);
 
-    // Conteúdo
-    const c2 = document.createElement("div");
-    c2.className = "cell";
+    // TD 3: Conteúdo
+    const td2 = document.createElement("td");
     const conteudo = document.createElement("div");
     conteudo.className = "rich";
     conteudo.dataset.field = "conteudo";
     conteudo.dataset.index = idx;
     conteudo.innerHTML = r.conteudo || "";
     if(!state.isViewMode) conteudo.contentEditable = "true";
-    c2.appendChild(conteudo);
+    td2.appendChild(conteudo);
 
-    // Desenvolvimento
-    const c3 = document.createElement("div");
-    c3.className = "cell";
+    // TD 4: Desenvolvimento
+    const td3 = document.createElement("td");
     const des = document.createElement("div");
     des.className = "rich";
     des.dataset.field = "desenvolvimento";
     des.dataset.index = idx;
     des.innerHTML = r.desenvolvimento || "";
     if(!state.isViewMode) des.contentEditable = "true";
-    c3.appendChild(des);
+    td3.appendChild(des);
 
-    // Materiais
-    const c4 = document.createElement("div");
-    c4.className = "cell";
+    // TD 5: Materiais
+    const td4 = document.createElement("td");
     const mat = document.createElement("div");
     mat.className = "rich";
     mat.dataset.field = "materiais";
     mat.dataset.index = idx;
     mat.innerHTML = r.materiais || "";
     if(!state.isViewMode) mat.contentEditable = "true";
-    c4.appendChild(mat);
+    td4.appendChild(mat);
 
-    row.appendChild(unitCell);
-    row.appendChild(c1);
-    row.appendChild(c2);
-    row.appendChild(c3);
-    row.appendChild(c4);
+    tr.appendChild(tdUnit);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    tr.appendChild(td4);
 
-    rowsEl.appendChild(row);
+    rowsEl.appendChild(tr);
   });
 
   hookEditListeners();
 }
+
 
 /* =========================
    EDIT LISTENERS
