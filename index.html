@@ -1,1 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lesson Prep</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- HEADER (faixa roxa + imagem do topo) -->
+    <header class="hero">
+      <div class="hero-bg">
+        <img class="hero-img" src="assets/header.png" alt="Header Image" onerror="this.style.display='none'">
+      </div>
+
+      <div class="hero-content">
+        <div class="brand-left">
+          <img src="assets/logo-left.png" alt="Logo Left" onerror="this.outerHTML='<div class=&quot;logo-fallback&quot;>Educação<br/>Adventista</div>'">
+        </div>
+
+        <div class="hero-center">
+          <button class="pill pill-primary" id="termBtn" type="button">
+            <span id="termLabel">1º Bimestre - LIVRO/TURMA</span>
+          </button>
+
+          <div class="meta">
+            <div class="meta-line">
+              <span class="meta-label">Professor:</span>
+              <span class="meta-value" contenteditable="true" id="teacherName">Bruno Agostinho</span>
+            </div>
+
+            <div class="meta-line">
+              <span class="meta-label">Programa Bilíngue -</span>
+              <span class="meta-label">DATA:</span>
+              <span class="meta-value" contenteditable="true" id="dateField">26 a 30 de Janeiro</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-right">
+          <img src="assets/logo-right.png" alt="Logo Right" onerror="this.outerHTML='<div class=&quot;logo-fallback&quot;>SKY<br/>ENGLISH</div>'">
+        </div>
+      </div>
+    </header>
+
+    <!-- TOP BAR: Week selector + Share -->
+    <div class="top-actions">
+      <button class="pill pill-week" id="weekBtn" type="button">
+        <span class="tick"></span>
+        <span id="weekLabel">(26 a 30 de Janeiro)</span>
+      </button>
+
+      <div class="actions-right">
+        <button class="btn btn-ghost" id="saveBtn" type="button">Salvar</button>
+        <button class="btn btn-primary" id="shareBtn" type="button">Compartilhar com o Advisor</button>
+      </div>
+    </div>
+
+    <!-- TITLE LEFT -->
+    <div class="title-row">
+      <div class="lesson-title">LESSON PREP</div>
+    </div>
+
+    <!-- TABLE WRAPPER -->
+    <section class="sheet-wrap">
+      <div class="sheet">
+        <div class="table-head">
+          <div class="th th-unit">Unit, Day</div>
+          <div class="th">Conteúdo</div>
+          <div class="th">Desenvolvimento da aula</div>
+          <div class="th">Materiais para a aula</div>
+        </div>
+
+        <!-- ROWS -->
+        <div class="rows" id="rows"></div>
+      </div>
+    </section>
+
+    <!-- COORDINATION MESSAGE -->
+    <section class="coord">
+      <div class="coord-label">COORDINATION MESSAGE:</div>
+      <div class="coord-box">
+        <div class="coord-edit rich" contenteditable="true" id="coordMessage"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- RICH TOOLBAR (floating) -->
+  <div class="toolbar" id="toolbar" aria-hidden="true">
+    <button class="tbtn" data-cmd="bold" title="Negrito"><b>B</b></button>
+    <button class="tbtn" data-cmd="italic" title="Itálico"><i>I</i></button>
+    <button class="tbtn" data-cmd="underline" title="Sublinhado"><u>U</u></button>
+    <span class="tsep"></span>
+    <button class="tbtn" data-cmd="insertUnorderedList" title="Marcadores">•</button>
+    <button class="tbtn" data-cmd="insertOrderedList" title="Numeração">1.</button>
+    <span class="tsep"></span>
+    <button class="tbtn" data-align="justifyLeft" title="Alinhar à esquerda">⟸</button>
+    <button class="tbtn" data-align="justifyCenter" title="Centralizar">≡</button>
+    <button class="tbtn" data-align="justifyRight" title="Alinhar à direita">⟹</button>
+    <span class="tsep"></span>
+    <input type="color" class="tcolor" id="colorPicker" title="Cor do texto" />
+  </div>
+
+  <!-- MODAL: Week picker -->
+  <div class="modal" id="weekModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-title">Selecionar semana</div>
+
+      <div class="modal-grid">
+        <label class="mlabel">Mês</label>
+        <select id="monthSelect" class="mselect"></select>
+
+        <label class="mlabel">Semana (dias úteis)</label>
+        <select id="weekSelect" class="mselect"></select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="closeModal" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="applyWeek" type="button">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Term/Bimestre picker -->
+  <div class="modal" id="termModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-title">Selecionar bimestre</div>
+
+      <div class="modal-grid">
+        <label class="mlabel">Bimestre</label>
+        <select id="termSelect" class="mselect">
+          <option value="1">1º Bimestre - LIVRO/TURMA</option>
+          <option value="2">2º Bimestre - LIVRO/TURMA</option>
+          <option value="3">3º Bimestre - LIVRO/TURMA</option>
+          <option value="4">4º Bimestre - LIVRO/TURMA</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="closeTermModal" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="applyTerm" type="button">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
 
