@@ -49,9 +49,65 @@ body{
 }
 
 /* MOBILE layout (logos + bimestre) */
+/* No desktop: mostrar o bloco do bimestre/professor abaixo do header.png */
 .hero-content{
-  display:none;
+  display:flex;
+  padding: 10px 16px 6px 16px;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  background:#fff;
 }
+
+/* ✅ Ajustes do bloco de informações (bimestre/professor/data) */
+.brand-left, .brand-right{
+  display:none; /* no desktop não precisa, porque já tem no PNG */
+}
+
+.hero-center{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* botão tic-tac do bimestre */
+.pill-primary{
+  background: #f6f6f6;
+  border:2px solid rgba(0,0,0,.12);
+  color:#111;
+  font-weight:900;
+}
+
+/* área Professor/Data */
+.meta{
+  font-size:13px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.meta-line{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.meta-label{
+  font-weight:900;
+  color: var(--navy);
+}
+
+.meta-value{
+  font-weight:700;
+  color:#111;
+  padding:2px 8px;
+  border-radius:10px;
+  background:#f7f7f7;
+  border:1px solid rgba(0,0,0,.08);
+}
+
+
 
 /* =========================
    TOP ACTIONS
