@@ -1,12 +1,10 @@
 :root{
-  --purple-1:#5a2b86;
-  --purple-2:#3f1b64;
   --orange:#e2772a;
   --navy:#172242;
-  --navy-2:#0f1730;
   --grid:#1a2347;
   --paper:#ffffff;
-  --muted:#666;
+  --purple-1:#5a2b86;
+  --purple-2:#3f1b64;
 }
 
 *{ box-sizing:border-box; }
@@ -28,65 +26,44 @@ body{
   overflow:hidden;
 }
 
-/* HERO */
+/* =========================
+   HERO HEADER
+========================= */
+
+/* ✅ DESKTOP: header.png puro, sem roxo por cima */
 .hero{
+  background: transparent;
+  padding: 0;
   position:relative;
-  background: linear-gradient(135deg,var(--purple-1),var(--purple-2));
-  padding: 18px 18px 14px 18px;
 }
 
 .hero-bg{
-  position:absolute;
-  inset:0;
-  opacity:.35;
-  pointer-events:none;
+  width:100%;
+  background: transparent;
 }
 
 .hero-img{
   width:100%;
-  height:100%;
-  object-fit:cover;
+  height:auto;          /* ✅ encaixa automaticamente */
+  display:block;        /* ✅ remove espaços estranhos */
+  object-fit: contain;  /* ✅ sem deformar */
 }
 
+/* MOBILE layout (logos + bimestre) */
 .hero-content{
-  position:relative;
+  display:none; /* ✅ DESKTOP não mostra (pq o PNG já é o header completo) */
+}
+
+/* =========================
+   TOP ACTIONS
+========================= */
+.top-actions{
+  padding: 12px 16px;
   display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:16px;
-}
-
-.brand-left,.brand-right{
-  width:140px;
-  min-width:140px;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding-top:4px;
-}
-
-.brand-left img, .brand-right img{
-  max-width:120px;
-  max-height:56px;
-  object-fit:contain;
-  filter: drop-shadow(0 3px 6px rgba(0,0,0,.25));
-}
-
-.logo-fallback{
-  color:#fff;
-  font-weight:700;
-  text-align:center;
-  font-size:14px;
-  line-height:1.1;
-  opacity:.95;
-}
-
-.hero-center{
-  flex:1;
-  display:flex;
-  flex-direction:column;
   align-items:center;
-  gap:8px;
+  justify-content:space-between;
+  gap:12px;
+  background:#fff;
 }
 
 .pill{
@@ -98,60 +75,6 @@ body{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  box-shadow: 0 6px 16px rgba(0,0,0,.18);
-}
-
-.pill-primary{
-  background:#fff;
-  color:#111;
-}
-
-.pill-static{
-  cursor:default;
-  box-shadow:none;
-}
-
-.meta{
-  width:100%;
-  max-width:520px;
-  color:#fff;
-  font-size:14px;
-  line-height:1.2;
-}
-
-.meta-line{
-  display:flex;
-  justify-content:center;
-  gap:8px;
-  margin:3px 0;
-  flex-wrap:wrap;
-}
-
-.meta-label{
-  font-weight:700;
-  opacity:.95;
-}
-
-.meta-value{
-  padding:2px 6px;
-  border-radius:6px;
-  background:rgba(255,255,255,.10);
-  min-width:120px;
-  text-align:center;
-}
-
-.meta-value[contenteditable="true"]:focus{
-  outline:2px solid rgba(255,255,255,.45);
-}
-
-/* TOP ACTIONS */
-.top-actions{
-  padding: 12px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  background:#fff;
 }
 
 .pill-week{
@@ -159,6 +82,10 @@ body{
   border:2px solid rgba(0,0,0,.15);
   box-shadow:none;
   font-weight:700;
+}
+
+.pill-static{
+  cursor:default;
 }
 
 .tick{
@@ -192,7 +119,9 @@ body{
   color:#111;
 }
 
-/* TITLE */
+/* =========================
+   TITLE
+========================= */
 .title-row{
   padding: 0 16px 8px 16px;
   display:flex;
@@ -206,7 +135,9 @@ body{
   letter-spacing:.5px;
 }
 
-/* SHEET */
+/* =========================
+   TABLE (4 colunas iguais ao PDF)
+========================= */
 .sheet-wrap{
   padding: 0 14px 14px 14px;
 }
@@ -218,12 +149,20 @@ body{
   background:#fff;
 }
 
-/* ✅ TABELA REAL (resolve 100% das linhas) */
 .lp-table{
   width:100%;
-  border-collapse: collapse;  /* 🔥 essa é a chave */
+  border-collapse: collapse;
   table-layout: fixed;
 }
+
+/* ✅ Proporções reais do PDF:
+   Unit, Day pequena
+   Desenvolvimento maior
+   Conteúdo e Materiais grandes */
+.col-unit{ width: 12%; }
+.col-content{ width: 28%; }
+.col-dev{ width: 32%; }
+.col-mat{ width: 28%; }
 
 .lp-table th{
   background: var(--orange);
@@ -243,7 +182,7 @@ body{
   border-bottom: 2px solid var(--grid);
   vertical-align: top;
   background:#fff;
-  padding:0; /* deixa o rich controlar padding */
+  padding:0;
 }
 
 .lp-table tr:last-child td{
@@ -254,10 +193,7 @@ body{
   border-right:none;
 }
 
-/* primeira coluna "Unit, Day" */
-.lp-table col.col-unit{ width:130px; }
-
-/* Unit cell: date number + weekday pill */
+/* Unit cell: número + pill vertical */
 .unitCell{
   display:flex;
   gap:8px;
@@ -292,7 +228,7 @@ body{
   user-select:none;
 }
 
-/* Editable rich fields */
+/* Rich editable fields */
 .rich{
   padding:10px;
   min-height:78px;
@@ -302,14 +238,14 @@ body{
   height:100%;
 }
 
+/* ✅ sem outline (outline cria “linha falsa”) */
 .rich:focus{
-  /* ao invés de outline que pode dar impressão de linha extra */
   box-shadow: inset 0 0 0 3px rgba(90,43,134,.18);
-  border-radius:0;
 }
 
-
-/* COORDINATION MESSAGE */
+/* =========================
+   COORDINATION MESSAGE
+========================= */
 .coord{
   padding: 10px 14px 18px 14px;
 }
@@ -334,7 +270,9 @@ body{
   border-radius:12px;
 }
 
-/* TOOLBAR */
+/* =========================
+   TOOLBAR
+========================= */
 .toolbar{
   position:fixed;
   left:50%;
@@ -362,10 +300,6 @@ body{
   font-weight:800;
 }
 
-.tbtn:active{
-  transform: translateY(1px);
-}
-
 .tsep{
   width:1px;
   height:22px;
@@ -381,7 +315,9 @@ body{
   padding:0;
 }
 
-/* MODAL */
+/* =========================
+   MODALS
+========================= */
 .modal{
   position:fixed;
   inset:0;
@@ -436,11 +372,107 @@ body{
   margin-top:12px;
 }
 
+/* =========================
+   MOBILE (mantém o layout antigo)
+========================= */
 @media (max-width: 560px){
+  .page{
+    margin:0;
+    border-radius:0;
+    min-height:100vh;
+  }
+
+  /* ✅ mobile não usa header.png */
+  .hero{
+    background: linear-gradient(135deg,var(--purple-1),var(--purple-2));
+    padding: 18px 18px 14px 18px;
+  }
+
+  .hero-bg{
+    display:none;
+  }
+
+  .hero-content{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .brand-left,.brand-right{
+    width:94px;
+    min-width:94px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding-top:4px;
+  }
+
+  .brand-left img, .brand-right img{
+    max-width:88px;
+    max-height:54px;
+    object-fit:contain;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.25));
+  }
+
+  .logo-fallback{
+    color:#fff;
+    font-weight:700;
+    text-align:center;
+    font-size:13px;
+    line-height:1.1;
+    opacity:.95;
+  }
+
+  .hero-center{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+
+  .pill-primary{
+    background:#fff;
+    color:#111;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18);
+  }
+
+  .meta{
+    width:100%;
+    color:#fff;
+    font-size:13px;
+    line-height:1.2;
+  }
+
+  .meta-line{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin:3px 0;
+    flex-wrap:wrap;
+  }
+
+  .meta-label{
+    font-weight:700;
+    opacity:.95;
+  }
+
+  .meta-value{
+    padding:2px 6px;
+    border-radius:6px;
+    background:rgba(255,255,255,.10);
+    min-width:120px;
+    text-align:center;
+  }
+
   .actions-right{ gap:8px; }
   .btn{ padding:10px 10px; font-size:12px; }
   .pill-week{ padding:8px 10px; font-size:12px; }
 
+  .lesson-title{ font-size:34px; }
+
+  /* tabela com scroll suave */
   .sheet-wrap{
     overflow-x:auto;
     -webkit-overflow-scrolling: touch;
@@ -451,8 +483,9 @@ body{
   }
 }
 
-
-/* VIEW MODE */
+/* =========================
+   VIEW MODE (Advisor)
+========================= */
 .view-mode .toolbar,
 .view-mode #saveBtn,
 .view-mode #shareBtn,
@@ -460,32 +493,3 @@ body{
 .view-mode #termBtn{
   display:none !important;
 }
-
-/* DESKTOP: só header.png, sem logo esquerda/direita */
-@media (min-width: 561px){
-  .brand-left,
-  .brand-right{
-    display:none;
-  }
-
-  .hero-content{
-    justify-content:center;
-  }
-
-  .hero-center{
-    max-width:700px;
-  }
-}
-
-/* MOBILE: esconde header.png pra não deformar e mantém os logos */
-@media (max-width: 560px){
-  .hero-bg{
-    display:none;
-  }
-
-  .brand-left,
-  .brand-right{
-    display:flex;
-  }
-}
-
