@@ -235,7 +235,7 @@ body{
   align-items:stretch;
   padding:8px 0;
   pointer-events:none;
-  z-index: 5;
+  /*z-index: 5;*/
 }
 
 .dayNum{
