@@ -49,7 +49,7 @@
       </div>
     </header>
 
-    <!-- ✅ SEM botão voltar -->
+    <!-- ✅ SEM botão voltar, sem salvar, sem share -->
     <div class="top-actions">
       <div class="pill pill-week pill-static">
         <span class="tick"></span>
@@ -57,42 +57,54 @@
       </div>
     </div>
 
+    <!-- TITLE + TURMA (somente leitura) -->
     <div class="title-row">
       <div class="lesson-title">LESSON PREP</div>
+
+      <button class="pill pill-week class-btn pill-static" type="button">
+        <span class="tick"></span>
+        <span id="classLabel">Turma: Infantil 3</span>
+      </button>
     </div>
 
+    <!-- TABLE -->
     <section class="sheet-wrap">
       <div class="sheet">
-        <table class="lp-table">
-          <colgroup>
-            <col class="col-unit">
-            <col class="col-content">
-            <col class="col-dev">
-            <col class="col-mat">
-          </colgroup>
+        <div class="sheet-inner">
+          <table class="lp-table">
+            <colgroup>
+              <col class="col-unit">
+              <col class="col-content">
+              <col class="col-dev">
+              <col class="col-mat">
+            </colgroup>
 
-          <thead>
-            <tr>
-              <th>Unit, Day</th>
-              <th>Conteúdo</th>
-              <th>Desenvolvimento da aula</th>
-              <th>Materiais para a aula</th>
-            </tr>
-          </thead>
+            <thead>
+              <tr>
+                <th>Unit, Day</th>
+                <th>Conteúdo</th>
+                <th>Desenvolvimento da aula</th>
+                <th>Materiais para a aula</th>
+              </tr>
+            </thead>
 
-          <tbody id="rows"></tbody>
-        </table>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
+    <!-- COORDINATION MESSAGE -->
     <section class="coord">
       <div class="coord-label">COORDINATION MESSAGE:</div>
       <div class="coord-box">
         <div class="coord-edit" id="coordMessage"></div>
       </div>
     </section>
+
   </div>
 
+  <!-- ✅ usa o mesmo app.js (porque ele detecta view-mode e não deixa editar) -->
   <script src="app.js"></script>
 </body>
 </html>
