@@ -1,11 +1,9 @@
-
 /* =========================
    CONFIG
 ========================= */
 
 // Tenho que lembrar de mudar, caso necessario.
-const API_URL = "https://script.google.com/macros/s/AKfycbzlRaBpUF9281Srwz5ToaKxyrg281syqaVbkYm7pFtoMVApsqzS0tOffBlcinehas2C8g/exec"; 
-
+const API_URL = "https://script.google.com/macros/s/AKfycbzlRaBpUF9281Srwz5ToaKxyrg281syqaVbkYm7pFtoMVApsqzS0tOffBlcinehas2C8g/exec";
 
 const WEEKDAYS = [
   { key: "SEG", label: "SEG" },
@@ -20,11 +18,24 @@ const MONTHS_PT = [
   "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
 ];
 
+const CLASSES = [
+  "Infantil 3",
+  "Infantil 4",
+  "Infantil 5",
+  "1 Ano",
+  "2 Ano",
+  "3 Ano",
+  "4 Ano",
+  "5 Ano",
+  "6 Ano",
+];
+
 /* =========================
    STATE
 ========================= */
 const state = {
   term: "1",
+  className: "Infantil 3", // ✅ NOVO
   teacher: "Bruno Agostinho",
   weekStart: null, // Date object (Mon)
   weekLabel: "(26 a 30 de Janeiro)",
@@ -58,13 +69,10 @@ function mondayOf(date){
 }
 
 function businessWeeksOfMonth(year, monthIndex){
-  // returns list of { weekStart: Date, label: "(26 a 30 de Janeiro)" }
-  // consider only Mon-Fri weeks (starting Monday)
   const first = new Date(year, monthIndex, 1);
   const last = new Date(year, monthIndex + 1, 0);
   const weeks = [];
 
-  // start from the first monday on/before first day
   let cursor = mondayOf(first);
 
   while(cursor <= last){
@@ -72,7 +80,6 @@ function businessWeeksOfMonth(year, monthIndex){
     const fri = new Date(cursor);
     fri.setDate(fri.getDate() + 4);
 
-    // keep if at least one business day falls inside month
     const anyInside =
       (mon.getMonth() === monthIndex) ||
       (new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+1).getMonth() === monthIndex) ||
@@ -106,8 +113,15 @@ function setQueryParams(obj){
 
 function defaultWeekIfNone(){
   const today = new Date();
-  const mon = mondayOf(today);
-  return mon;
+  return mondayOf(today);
+}
+
+function sanitizeKeyPart(s){
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
 }
 
 /* =========================
@@ -139,13 +153,13 @@ function renderRows(){
   state.rows.forEach((r, idx) => {
     const tr = document.createElement("tr");
 
-    // ✅ COL 1: Unit, Day (somente o campo editável)
+    // ✅ COL 1: Unit, Day
     const tdUnit = document.createElement("td");
     tdUnit.className = "td-unit";
 
-    // ✅ Badge fora da coluna (visualmente)
     const badge = document.createElement("div");
     badge.className = "day-badge";
+    badge.setAttribute("aria-hidden","true");
 
     const dayNum = document.createElement("div");
     dayNum.className = "dayNum";
@@ -158,7 +172,6 @@ function renderRows(){
     badge.appendChild(dayNum);
     badge.appendChild(weekPill);
 
-    // ✅ Campo Unit/Day
     const unitText = document.createElement("div");
     unitText.className = "rich";
     unitText.dataset.field = "unitDay";
@@ -169,7 +182,7 @@ function renderRows(){
     tdUnit.appendChild(badge);
     tdUnit.appendChild(unitText);
 
-    // ✅ COL 2: Conteúdo
+    // ✅ COL 2
     const td2 = document.createElement("td");
     const conteudo = document.createElement("div");
     conteudo.className = "rich";
@@ -179,7 +192,7 @@ function renderRows(){
     if(!state.isViewMode) conteudo.contentEditable = "true";
     td2.appendChild(conteudo);
 
-    // ✅ COL 3: Desenvolvimento
+    // ✅ COL 3
     const td3 = document.createElement("td");
     const des = document.createElement("div");
     des.className = "rich";
@@ -189,7 +202,7 @@ function renderRows(){
     if(!state.isViewMode) des.contentEditable = "true";
     td3.appendChild(des);
 
-    // ✅ COL 4: Materiais
+    // ✅ COL 4
     const td4 = document.createElement("td");
     const mat = document.createElement("div");
     mat.className = "rich";
@@ -210,9 +223,6 @@ function renderRows(){
   hookEditListeners();
 }
 
-
-
-
 /* =========================
    EDIT LISTENERS
 ========================= */
@@ -228,7 +238,6 @@ function hookEditListeners(){
 
     el.addEventListener("focus", () => showToolbar());
     el.addEventListener("blur", () => {
-      // delay: allow toolbar click
       setTimeout(() => {
         if(!document.activeElement.closest?.(".toolbar")) hideToolbar();
       }, 120);
@@ -258,7 +267,7 @@ function hookEditListeners(){
 }
 
 /* =========================
-   TOOLBAR (formatting)
+   TOOLBAR
 ========================= */
 function showToolbar(){
   const tb = document.getElementById("toolbar");
@@ -279,7 +288,6 @@ function initToolbar(){
   if(!tb) return;
 
   tb.addEventListener("mousedown", (e) => {
-    // prevent losing focus of editable while clicking toolbar
     e.preventDefault();
   });
 
@@ -304,7 +312,7 @@ function initToolbar(){
 }
 
 /* =========================
-   WEEK + TERM PICKERS
+   MODALS
 ========================= */
 function openModal(modalId){
   const m = document.getElementById(modalId);
@@ -320,6 +328,61 @@ function closeModal(modalId){
   m.setAttribute("aria-hidden","true");
 }
 
+/* =========================
+   CLASS PICKER ✅ NOVO
+========================= */
+function initClassPicker(){
+  const classBtn = document.getElementById("classBtn");
+  const classSelect = document.getElementById("classSelect");
+  if(!classBtn || !classSelect) return;
+
+  // popular select
+  classSelect.innerHTML = "";
+  CLASSES.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    classSelect.appendChild(opt);
+  });
+  classSelect.value = state.className;
+
+  const classLabel = document.getElementById("classLabel");
+  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+
+  // view mode: só mostra, não abre modal
+  if(state.isViewMode) return;
+
+  classBtn.addEventListener("click", () => openModal("classModal"));
+
+  document.getElementById("closeClassModal")?.addEventListener("click", () => closeModal("classModal"));
+
+  document.getElementById("applyClass")?.addEventListener("click", async () => {
+    const selected = classSelect.value || CLASSES[0];
+    await setClass(selected);
+    closeModal("classModal");
+  });
+}
+
+async function setClass(newClass){
+  state.className = newClass;
+
+  const classLabel = document.getElementById("classLabel");
+  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+
+  setQueryParams({
+    term: state.term,
+    week: toISODate(state.weekStart),
+    class: state.className,
+  });
+
+  // troca de turma = carrega o lançamento daquela turma
+  hydrateUI();
+  await loadFromBackend();
+}
+
+/* =========================
+   WEEK + TERM PICKERS
+========================= */
 function initWeekPicker(){
   const weekBtn = document.getElementById("weekBtn");
   const weekModal = document.getElementById("weekModal");
@@ -329,7 +392,6 @@ function initWeekPicker(){
   if(!weekBtn || !weekModal || !monthSelect || !weekSelect) return;
   if(state.isViewMode) return;
 
-  // months
   const now = new Date();
   for(let i=0; i<12; i++){
     const opt = document.createElement("option");
@@ -344,7 +406,7 @@ function initWeekPicker(){
     const m = Number(monthSelect.value);
     const weeks = businessWeeksOfMonth(year, m);
     weekSelect.innerHTML = "";
-    weeks.forEach((w, i) => {
+    weeks.forEach((w) => {
       const opt = document.createElement("option");
       opt.value = toISODate(w.weekStart);
       opt.textContent = w.label;
@@ -381,7 +443,7 @@ function initTermPicker(){
   document.getElementById("applyTerm")?.addEventListener("click", async () => {
     state.term = termSelect.value;
     document.getElementById("termLabel").textContent = `${state.term}º Bimestre - LIVRO/TURMA`;
-    setQueryParams({ term: state.term });
+    setQueryParams({ term: state.term, class: state.className, week: toISODate(state.weekStart) });
     await loadFromBackend();
     closeModal("termModal");
   });
@@ -392,8 +454,8 @@ function initTermPicker(){
 ========================= */
 
 function makeKey(){
-  // key = term + weekStart iso
-  return `${state.term}_${toISODate(state.weekStart)}`;
+  // ✅ key agora inclui turma
+  return `${state.term}_${toISODate(state.weekStart)}_${sanitizeKeyPart(state.className)}`;
 }
 
 async function loadFromBackend(){
@@ -413,7 +475,6 @@ async function loadFromBackend(){
       state.dateText = p.dateText || state.dateText;
       state.coordMessage = p.coordMessage || "";
 
-      // rows
       if(Array.isArray(p.rows) && p.rows.length === 5){
         state.rows = p.rows;
       }
@@ -436,6 +497,7 @@ async function saveToBackend(){
   const payload = {
     key,
     term: state.term,
+    className: state.className, // ✅ NOVO
     weekStart: toISODate(state.weekStart),
     teacher: state.teacher,
     dateText: state.dateText,
@@ -443,7 +505,6 @@ async function saveToBackend(){
     coordMessage: state.coordMessage,
   };
 
-  // Vamos salvar via GET para ficar simples (mais compatível)
   const url = `${API_URL}?action=save&data=${encodeURIComponent(JSON.stringify(payload))}`;
 
   try{
@@ -475,6 +536,9 @@ function hydrateUI(){
   if(dateField) dateField.innerText = state.dateText;
   if(teacherName) teacherName.innerText = state.teacher;
 
+  const classLabel = document.getElementById("classLabel");
+  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+
   if(coordMessage){
     if(!state.isViewMode) coordMessage.setAttribute("contenteditable","true");
     coordMessage.innerHTML = state.coordMessage || "";
@@ -494,12 +558,12 @@ async function setWeek(mondayDate){
   state.weekLabel = label;
   state.dateText = `${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]}`;
 
-  // default rows for this week
   state.rows = buildInitialRows(state.weekStart);
 
   setQueryParams({
     term: state.term,
     week: toISODate(state.weekStart),
+    class: state.className,
   });
 
   hydrateUI();
@@ -514,11 +578,10 @@ function initShare(){
   if(!shareBtn || state.isViewMode) return;
 
   shareBtn.addEventListener("click", async () => {
-    // salva antes de compartilhar
     await saveToBackend();
 
     const base = window.location.origin + window.location.pathname.replace("index.html","").replace(/\/$/,"/");
-    const viewLink = `${base}view.html?term=${encodeURIComponent(state.term)}&week=${encodeURIComponent(toISODate(state.weekStart))}`;
+    const viewLink = `${base}view.html?term=${encodeURIComponent(state.term)}&week=${encodeURIComponent(toISODate(state.weekStart))}&class=${encodeURIComponent(state.className)}`;
 
     const msg = `Lesson Prep (somente leitura):\n${viewLink}`;
     const wa = `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -534,8 +597,7 @@ function applyQueryState(){
   const q = getQueryParams();
 
   if(q.term) state.term = q.term;
-  const termLabel = document.getElementById("termLabel");
-  if(termLabel) termLabel.textContent = `${state.term}º Bimestre - LIVRO/TURMA`;
+  if(q.class) state.className = q.class;
 
   let w = q.week ? fromISODate(q.week) : defaultWeekIfNone();
   state.weekStart = mondayOf(w);
@@ -548,6 +610,12 @@ function applyQueryState(){
   state.dateText = `${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]}`;
 
   state.rows = buildInitialRows(state.weekStart);
+
+  setQueryParams({
+    term: state.term,
+    week: toISODate(state.weekStart),
+    class: state.className,
+  });
 }
 
 /* =========================
@@ -582,15 +650,14 @@ async function init(){
 
   initWeekPicker();
   initTermPicker();
+  initClassPicker(); // ✅ NOVO
   initShare();
 
-  // Save button
   const saveBtn = document.getElementById("saveBtn");
   if(saveBtn && !state.isViewMode){
     saveBtn.addEventListener("click", saveToBackend);
   }
 
-  // load saved data
   await loadFromBackend();
 }
 
