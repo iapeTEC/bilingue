@@ -550,11 +550,10 @@ async function loadFromBackend(){
   }
 }
 
-
 async function saveToBackend(){
   if(!API_URL || API_URL.includes("COLE_AQUI")) {
     alert("Cole a URL do Web App do Apps Script em app.js (API_URL).");
-    return;
+    return false;
   }
 
   const key = makeKey();
@@ -562,7 +561,7 @@ async function saveToBackend(){
   const payload = {
     key,
     term: state.term,
-    className: state.className, // ✅ NOVO
+    className: state.className,
     weekStart: toISODate(state.weekStart),
     teacher: state.teacher,
     dateText: state.dateText,
@@ -572,19 +571,41 @@ async function saveToBackend(){
 
   const url = `${API_URL}?action=save&data=${encodeURIComponent(JSON.stringify(payload))}`;
 
-  try{
-    const res = await fetch(url, { method:"GET" });
-    const data = await res.json();
-    if(data?.ok){
-      toast("Salvo ✅");
-    }else{
-      toast("Não salvou (verifique Apps Script)");
+  try {
+    // ✅ 1) tenta o modo normal (desktop geralmente funciona)
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        cache: "no-cache",
+        keepalive: true,
+        mode: "cors",
+      });
+
+      // Se conseguir ler, perfeito
+      await res.text();
+      console.log("✅ Salvou (CORS ok)");
+      return true;
+
+    } catch (err) {
+      // ✅ 2) fallback MOBILE: envia mesmo que CORS bloqueie resposta
+      await fetch(url, {
+        method: "GET",
+        cache: "no-cache",
+        keepalive: true,
+        mode: "no-cors",
+      });
+
+      console.log("✅ Salvou (fallback no-cors)");
+      return true;
     }
-  }catch(err){
-    console.warn("Falha ao salvar:", err);
-    toast("Falha ao salvar (verifique CORS/Deploy)");
+
+  } catch (e) {
+    console.error("Falha ao salvar:", e);
+    alert("Falha ao salvar: verifique CORS/Deploy");
+    return false;
   }
 }
+
 
 /* =========================
    UI HYDRATE
