@@ -139,10 +139,11 @@ function renderRows(){
   state.rows.forEach((r, idx) => {
     const tr = document.createElement("tr");
 
-    // TD 1: Unit cell (número + pill)
+    // ✅ COL 1: Unit, Day (número + pill + área editável)
     const tdUnit = document.createElement("td");
-    const unitCell = document.createElement("div");
-    unitCell.className = "unitCell";
+
+    const wrap = document.createElement("div");
+    wrap.className = "unitCell";
 
     const dayNum = document.createElement("div");
     dayNum.className = "dayNum";
@@ -152,21 +153,24 @@ function renderRows(){
     weekPill.className = "weekPill";
     weekPill.textContent = r.weekday;
 
-    unitCell.appendChild(dayNum);
-    unitCell.appendChild(weekPill);
-    tdUnit.appendChild(unitCell);
+    wrap.appendChild(dayNum);
+    wrap.appendChild(weekPill);
 
-    // TD 2: Unit, Day field
-    const td1 = document.createElement("td");
-    const unit = document.createElement("div");
-    unit.className = "rich";
-    unit.dataset.field = "unitDay";
-    unit.dataset.index = idx;
-    unit.innerHTML = r.unitDay || "";
-    if(!state.isViewMode) unit.contentEditable = "true";
-    td1.appendChild(unit);
+    // ✅ área editável do Unit/Day (fica ao lado do pill)
+    const unitText = document.createElement("div");
+    unitText.className = "rich";
+    unitText.style.minHeight = "78px";
+    unitText.style.flex = "1";
+    unitText.dataset.field = "unitDay";
+    unitText.dataset.index = idx;
+    unitText.innerHTML = r.unitDay || "";
+    if(!state.isViewMode) unitText.contentEditable = "true";
 
-    // TD 3: Conteúdo
+    // junta tudo dentro da primeira coluna
+    wrap.appendChild(unitText);
+    tdUnit.appendChild(wrap);
+
+    // ✅ COL 2: Conteúdo
     const td2 = document.createElement("td");
     const conteudo = document.createElement("div");
     conteudo.className = "rich";
@@ -176,7 +180,7 @@ function renderRows(){
     if(!state.isViewMode) conteudo.contentEditable = "true";
     td2.appendChild(conteudo);
 
-    // TD 4: Desenvolvimento
+    // ✅ COL 3: Desenvolvimento (agora MAIOR)
     const td3 = document.createElement("td");
     const des = document.createElement("div");
     des.className = "rich";
@@ -186,7 +190,7 @@ function renderRows(){
     if(!state.isViewMode) des.contentEditable = "true";
     td3.appendChild(des);
 
-    // TD 5: Materiais
+    // ✅ COL 4: Materiais
     const td4 = document.createElement("td");
     const mat = document.createElement("div");
     mat.className = "rich";
@@ -197,7 +201,6 @@ function renderRows(){
     td4.appendChild(mat);
 
     tr.appendChild(tdUnit);
-    tr.appendChild(td1);
     tr.appendChild(td2);
     tr.appendChild(td3);
     tr.appendChild(td4);
@@ -207,6 +210,7 @@ function renderRows(){
 
   hookEditListeners();
 }
+
 
 
 /* =========================
