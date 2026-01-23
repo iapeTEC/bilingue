@@ -203,7 +203,7 @@ body{
 /* ✅ “Dia e Semana” (badge fora da tabela, lado esquerdo) */
 .day-badge{
   position:absolute;
-  left: -96px;      /* distância pra fora da tabela */
+  left: -120px;      /* distância pra fora da tabela */
   top: 0;
   height:100%;
   width: 90px;
