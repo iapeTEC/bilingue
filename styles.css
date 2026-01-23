@@ -637,3 +637,50 @@ body{
   }
 }
 
+/* =========================
+   FAST LOAD / LOADING INDICATOR
+========================= */
+body.is-loading #weekBtn{
+  position:relative;
+  opacity:.92;
+}
+
+body.is-loading #weekBtn::after{
+  content:"";
+  position:absolute;
+  right:12px;
+  top:50%;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  border:2px solid rgba(0,0,0,.25);
+  border-top-color: rgba(0,0,0,.65);
+  transform:translateY(-50%);
+  animation: lpSpin .7s linear infinite;
+}
+
+@keyframes lpSpin{
+  to{ transform:translateY(-50%) rotate(360deg); }
+}
+
+/* Title row: allow class button wrap nicely */
+.title-row{
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.class-btn{
+  white-space:nowrap;
+}
+
+/* On very small screens keep title + class button aligned */
+@media (max-width: 560px){
+  .title-row{
+    justify-content:space-between;
+  }
+  .class-btn{
+    padding:8px 10px;
+    font-size:12px;
+  }
+}
