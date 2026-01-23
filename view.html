@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lesson Prep (View)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="view-mode">
+  <div class="page">
+    <header class="hero">
+      <div class="hero-bg">
+        <img class="hero-img" src="assets/header.png" alt="Header Image" onerror="this.style.display='none'">
+      </div>
+
+      <div class="hero-content">
+        <div class="brand-left">
+          <img src="assets/logo-left.png" alt="Logo Left" onerror="this.outerHTML='<div class=&quot;logo-fallback&quot;>Educação<br/>Adventista</div>'">
+        </div>
+
+        <div class="hero-center">
+          <div class="pill pill-primary pill-static">
+            <span id="termLabel">1º Bimestre - LIVRO/TURMA</span>
+          </div>
+
+          <div class="meta">
+            <div class="meta-line">
+              <span class="meta-label">Professor:</span>
+              <span class="meta-value" id="teacherName">Bruno Agostinho</span>
+            </div>
+
+            <div class="meta-line">
+              <span class="meta-label">Programa Bilíngue -</span>
+              <span class="meta-label">DATA:</span>
+              <span class="meta-value" id="dateField">26 a 30 de Janeiro</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-right">
+          <img src="assets/logo-right.png" alt="Logo Right" onerror="this.outerHTML='<div class=&quot;logo-fallback&quot;>SKY<br/>ENGLISH</div>'">
+        </div>
+      </div>
+    </header>
+
+    <div class="top-actions">
+      <div class="pill pill-week pill-static">
+        <span class="tick"></span>
+        <span id="weekLabel">(26 a 30 de Janeiro)</span>
+      </div>
+      <div class="actions-right">
+        <a class="btn btn-primary" href="index.html">Voltar (Editar)</a>
+      </div>
+    </div>
+
+    <div class="title-row">
+      <div class="lesson-title">LESSON PREP</div>
+    </div>
+
+    <section class="sheet-wrap">
+      <div class="sheet">
+        <div class="table-head">
+          <div class="th th-unit">Unit, Day</div>
+          <div class="th">Conteúdo</div>
+          <div class="th">Desenvolvimento da aula</div>
+          <div class="th">Materiais para a aula</div>
+        </div>
+        <div class="rows" id="rows"></div>
+      </div>
+    </section>
+
+    <section class="coord">
+      <div class="coord-label">COORDINATION MESSAGE:</div>
+      <div class="coord-box">
+        <div class="coord-edit" id="coordMessage"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
 
