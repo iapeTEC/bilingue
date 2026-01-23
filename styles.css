@@ -135,27 +135,36 @@ body{
 }
 
 /* =========================
-   TABLE
+   TABLE (4 colunas iguais ao PDF)
 ========================= */
 
-/* ✅ GUTTER no desktop: espaço reservado pro badge fora da coluna */
+/* ✅ GUTTER real pra caber o badge do lado esquerdo */
 .sheet-wrap{
   padding: 0 14px 14px 110px;
 }
 
-/* container geral */
 .sheet{
   position:relative;
 }
 
-/* ✅ ESSA DIV segura o round TOP e BOTTOM da tabela */
+/* ✅ Aqui é o “segredo”: SEM overflow hidden
+   (pra badge aparecer) + borda arredondada desenhada por overlay */
 .sheet-inner{
+  position:relative;
   border-radius: 18px;
-  overflow: hidden;        /* ✅ CLIPPER do round inferior e superior */
-  border: 2px solid var(--grid);
+  overflow: visible;   /* ✅ badge aparece */
   background:#fff;
-  position: relative;
-  z-index: 1;
+}
+
+/* ✅ BORDA arredondada perfeita por cima, sem invadir o round */
+.sheet-inner::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border:2px solid var(--grid);
+  border-radius:18px;
+  pointer-events:none;
+  z-index:50;          /* fica por cima das linhas internas */
 }
 
 /* TABELA */
@@ -189,11 +198,9 @@ body{
 .lp-table thead th:first-child{
   border-top-left-radius: 16px;
 }
-
 .lp-table thead th:last-child{
   border-top-right-radius: 16px;
 }
-
 .lp-table thead th{
   background-clip: padding-box;
 }
@@ -207,7 +214,7 @@ body{
   padding:0;
 }
 
-/* ✅ remove linha final interna (pra não “invadir” o round inferior) */
+/* ✅ remove linha final interna (pra não invadir o round do rodapé) */
 .lp-table tbody tr:last-child td{
   border-bottom:none;
 }
@@ -219,17 +226,17 @@ body{
 /* PRIMEIRA COLUNA */
 .td-unit{
   position: relative;
+  z-index: 10; /* garante que o badge fica acima da tabela */
 }
 
 /* =========================
    BADGE (fora da coluna)
 ========================= */
 
-/* ✅ badge fica FORA do clipper (.sheet-inner), então ele aparece.
-   Para isso, ele PRECISA ficar com z-index maior que o container */
+/* ✅ Agora ele finalmente aparece (pq nada está clipando ele) */
 .day-badge{
   position:absolute;
-  left: -92px;       /* ✅ encaixa no gutter */
+  left: -92px;       /* encaixa no gutter */
   top: 0;
   height:100%;
   width: 86px;
@@ -238,7 +245,7 @@ body{
   align-items:stretch;
   padding:8px 0;
   pointer-events:none;
-  z-index: 999;      /* ✅ acima do clipper */
+  z-index: 100;      /* acima de tudo */
 }
 
 /* ✅ menorzinho */
@@ -482,15 +489,13 @@ body{
     min-width: 760px;
   }
 
-  /* ✅ NO MOBILE: badge não invade Unit, Day
-     Ele fica à esquerda fora da coluna (mas visível por causa do scroll) */
+  /* ✅ no mobile: NÃO invadir Unit, Day */
   .day-badge{
     left: -78px;
     width: 74px;
     opacity:.95;
   }
 
-  /* ✅ remove o padding que jogava o texto pra direita */
   .td-unit .rich{
     padding-left: 10px;
   }
