@@ -643,17 +643,34 @@ function initShare(){
   if(!shareBtn || state.isViewMode) return;
 
   shareBtn.addEventListener("click", async () => {
-    await saveToBackend();
 
-    const base = window.location.origin + window.location.pathname.replace("index.html","").replace(/\/$/,"/");
-    const viewLink = `${base}view.html?term=${encodeURIComponent(state.term)}&week=${encodeURIComponent(toISODate(state.weekStart))}&class=${encodeURIComponent(state.className)}`;
+    // ✅ monta o link primeiro
+    const base = window.location.origin + window.location.pathname
+      .replace("index.html","")
+      .replace(/\/$/,"/");
+
+    const viewLink =
+      `${base}view.html?term=${encodeURIComponent(state.term)}&week=${encodeURIComponent(toISODate(state.weekStart))}&class=${encodeURIComponent(state.className)}`;
 
     const msg = `Lesson Prep (somente leitura):\n${viewLink}`;
-    const wa = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-    window.open(wa, "_blank");
+    // ✅ abre IMEDIATAMENTE (pra não ser bloqueado no mobile)
+    const win = window.open("about:blank", "_blank");
+
+    // ✅ salva depois (não impede abrir o WhatsApp)
+    await saveToBackend();
+
+    // ✅ agora direciona a aba pro WhatsApp
+    if(win){
+      win.location.href = waUrl;
+    }else{
+      // fallback: se o navegador bloquear a aba, tenta abrir direto
+      window.location.href = waUrl;
+    }
   });
 }
+
 
 /* =========================
    LOAD FROM QUERY
