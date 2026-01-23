@@ -593,3 +593,47 @@ body{
 .view-mode #termBtn{
   display:none !important;
 }
+
+/* =========================
+   WEEK NAV (big arrows)
+========================= */
+.week-nav{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.nav-btn{
+  width:52px;
+  height:44px;
+  border:none;
+  border-radius:14px;
+  background:#f4f4f4;
+  border:2px solid rgba(0,0,0,.12);
+  font-size:34px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  user-select:none;
+}
+
+.nav-btn:active{
+  transform: scale(.96);
+}
+
+@media (max-width: 560px){
+  .week-nav{
+    width:100%;
+    justify-content:space-between;
+  }
+
+  .nav-btn{
+    width:54px;
+    height:46px;
+    font-size:36px;
+  }
+}
+
