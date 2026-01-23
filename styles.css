@@ -461,3 +461,31 @@ body{
   display:none !important;
 }
 
+/* DESKTOP: só header.png, sem logo esquerda/direita */
+@media (min-width: 561px){
+  .brand-left,
+  .brand-right{
+    display:none;
+  }
+
+  .hero-content{
+    justify-content:center;
+  }
+
+  .hero-center{
+    max-width:700px;
+  }
+}
+
+/* MOBILE: esconde header.png pra não deformar e mantém os logos */
+@media (max-width: 560px){
+  .hero-bg{
+    display:none;
+  }
+
+  .brand-left,
+  .brand-right{
+    display:flex;
+  }
+}
+
