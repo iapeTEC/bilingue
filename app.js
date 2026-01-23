@@ -139,11 +139,13 @@ function renderRows(){
   state.rows.forEach((r, idx) => {
     const tr = document.createElement("tr");
 
-    // ✅ COL 1: Unit, Day (número + pill + área editável)
+    // ✅ COL 1: Unit, Day (somente o campo editável)
     const tdUnit = document.createElement("td");
+    tdUnit.className = "td-unit";
 
-    const wrap = document.createElement("div");
-    wrap.className = "unitCell";
+    // ✅ Badge fora da coluna (visualmente)
+    const badge = document.createElement("div");
+    badge.className = "day-badge";
 
     const dayNum = document.createElement("div");
     dayNum.className = "dayNum";
@@ -153,22 +155,19 @@ function renderRows(){
     weekPill.className = "weekPill";
     weekPill.textContent = r.weekday;
 
-    wrap.appendChild(dayNum);
-    wrap.appendChild(weekPill);
+    badge.appendChild(dayNum);
+    badge.appendChild(weekPill);
 
-    // ✅ área editável do Unit/Day (fica ao lado do pill)
+    // ✅ Campo Unit/Day
     const unitText = document.createElement("div");
     unitText.className = "rich";
-    unitText.style.minHeight = "78px";
-    unitText.style.flex = "1";
     unitText.dataset.field = "unitDay";
     unitText.dataset.index = idx;
     unitText.innerHTML = r.unitDay || "";
     if(!state.isViewMode) unitText.contentEditable = "true";
 
-    // junta tudo dentro da primeira coluna
-    wrap.appendChild(unitText);
-    tdUnit.appendChild(wrap);
+    tdUnit.appendChild(badge);
+    tdUnit.appendChild(unitText);
 
     // ✅ COL 2: Conteúdo
     const td2 = document.createElement("td");
@@ -180,7 +179,7 @@ function renderRows(){
     if(!state.isViewMode) conteudo.contentEditable = "true";
     td2.appendChild(conteudo);
 
-    // ✅ COL 3: Desenvolvimento (agora MAIOR)
+    // ✅ COL 3: Desenvolvimento
     const td3 = document.createElement("td");
     const des = document.createElement("div");
     des.className = "rich";
@@ -210,6 +209,7 @@ function renderRows(){
 
   hookEditListeners();
 }
+
 
 
 
