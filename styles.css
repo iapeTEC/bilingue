@@ -154,10 +154,11 @@ body{
 /* ✅ Aqui sim fica o round perfeito + clip do laranja */
 .sheet-inner{
   border-radius: 18px;
-  overflow:hidden; /* ✅ garante round do laranja */
+  overflow: visible; /* ✅ agora o badge não some */
   border: 2px solid var(--grid);
   background:#fff;
 }
+
 
 /* TABELA */
 .lp-table{
@@ -184,6 +185,21 @@ body{
 .lp-table th:last-child{
   border-right:none;
 }
+
+/* ✅ ROUND do laranja sem precisar overflow:hidden */
+.lp-table thead th:first-child{
+  border-top-left-radius: 16px;
+}
+
+.lp-table thead th:last-child{
+  border-top-right-radius: 16px;
+}
+
+/* ✅ garante que o fundo laranja respeite o round */
+.lp-table thead th{
+  background-clip: padding-box;
+}
+
 
 .lp-table td{
   border-right: 2px solid var(--grid);
@@ -219,6 +235,7 @@ body{
   align-items:stretch;
   padding:8px 0;
   pointer-events:none;
+  z-index: 5;
 }
 
 .dayNum{
