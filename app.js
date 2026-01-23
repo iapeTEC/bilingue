@@ -459,6 +459,30 @@ function initTermPicker(){
 }
 
 /* =========================
+   Setas grandes de calendario
+========================= */
+
+function initWeekArrows(){
+  const prevBtn = document.getElementById("prevWeekBtn");
+  const nextBtn = document.getElementById("nextWeekBtn");
+
+  if(!prevBtn || !nextBtn) return;
+
+  prevBtn.addEventListener("click", async () => {
+    const d = new Date(state.weekStart);
+    d.setDate(d.getDate() - 7);
+    await setWeek(d);
+  });
+
+  nextBtn.addEventListener("click", async () => {
+    const d = new Date(state.weekStart);
+    d.setDate(d.getDate() + 7);
+    await setWeek(d);
+  });
+}
+
+
+/* =========================
    BACKEND (load/save)
 ========================= */
 
@@ -665,8 +689,10 @@ async function init(){
 
   initWeekPicker();
   initTermPicker();
-  initClassPicker(); // ✅ NOVO
+  initClassPicker(); 
   initShare();
+  initWeekArrows(); //Chama a seta de calendario
+
 
   const saveBtn = document.getElementById("saveBtn");
   if(saveBtn && !state.isViewMode){
