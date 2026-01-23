@@ -369,16 +369,25 @@ async function setClass(newClass){
   const classLabel = document.getElementById("classLabel");
   if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
 
+  // ✅ Atualiza URL (term + week + class)
   setQueryParams({
     term: state.term,
     week: toISODate(state.weekStart),
     class: state.className,
   });
 
-  // troca de turma = carrega o lançamento daquela turma
+  // ✅ MUITO IMPORTANTE:
+  // ao trocar de turma, já limpa tudo IMEDIATAMENTE pra lançar
+  state.rows = buildInitialRows(state.weekStart);
+  state.coordMessage = ""; // (opcional, mas recomendado por turma)
+
+  // mostra em branco na hora
   hydrateUI();
+
+  // depois tenta buscar se existe algo salvo pra essa turma
   await loadFromBackend();
 }
+
 
 /* =========================
    WEEK + TERM PICKERS
@@ -468,23 +477,29 @@ async function loadFromBackend(){
     const res = await fetch(url, { method:"GET" });
     const data = await res.json();
 
-    if(data && data.ok && data.payload){
-      const p = data.payload;
-
-      state.teacher = p.teacher || state.teacher;
-      state.dateText = p.dateText || state.dateText;
-      state.coordMessage = p.coordMessage || "";
-
-      if(Array.isArray(p.rows) && p.rows.length === 5){
-        state.rows = p.rows;
-      }
-
-      hydrateUI();
+    // ✅ Se não existe payload, mantém tudo branco
+    if(!data || !data.ok || !data.payload){
+      return;
     }
+
+    const p = data.payload;
+
+    state.teacher = p.teacher || state.teacher;
+    state.dateText = p.dateText || state.dateText;
+    state.coordMessage = p.coordMessage || "";
+
+    // rows
+    if(Array.isArray(p.rows) && p.rows.length === 5){
+      state.rows = p.rows;
+    }
+
+    hydrateUI();
+
   }catch(err){
     console.warn("Falha ao carregar:", err);
   }
 }
+
 
 async function saveToBackend(){
   if(!API_URL || API_URL.includes("COLE_AQUI")) {
