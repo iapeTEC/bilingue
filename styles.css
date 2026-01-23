@@ -142,11 +142,12 @@ body{
   padding: 0 14px 14px 14px;
 }
 
+/* ✅ importante: permitir o "dia/semana" sair pra fora da tabela */
 .sheet{
   border-radius: 18px;
-  overflow:hidden;
   border: 2px solid var(--grid);
   background:#fff;
+  overflow: visible; /* ✅ permite o badge ficar fora do grid */
 }
 
 .lp-table{
@@ -193,13 +194,24 @@ body{
   border-right:none;
 }
 
-/* Unit cell: número + pill vertical */
-.unitCell{
+/* ✅ PRIMEIRA COLUNA: agora ela contém APENAS o campo Unit,Day
+   O dia/semana vai aparecer fora da coluna via position absolute */
+.td-unit{
+  position: relative;
+}
+
+/* ✅ “Dia e Semana” (badge fora da tabela, lado esquerdo) */
+.day-badge{
+  position:absolute;
+  left: -96px;      /* distância pra fora da tabela */
+  top: 0;
+  height:100%;
+  width: 90px;
   display:flex;
   gap:8px;
   align-items:stretch;
-  padding:8px;
-  min-height:78px;
+  padding:8px 0;
+  pointer-events:none; /* ✅ não atrapalha clique no campo */
 }
 
 .dayNum{
@@ -210,6 +222,7 @@ body{
   font-size:42px;
   font-weight:900;
   color:#000;
+  line-height:1;
 }
 
 .weekPill{
@@ -480,6 +493,12 @@ body{
 
   .sheet{
     min-width: 760px;
+  }
+
+  /* ✅ no mobile, manter o badge grudado na coluna (pra não cortar) */
+  .day-badge{
+    left: -86px;
+    width: 80px;
   }
 }
 
