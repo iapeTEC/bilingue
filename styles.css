@@ -23,14 +23,13 @@ body{
   background: var(--paper);
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,.10);
-  overflow:hidden; /* ✅ mantém visual "documento" */
+  overflow:hidden;
 }
 
 /* =========================
    HERO HEADER
 ========================= */
 
-/* ✅ DESKTOP: header.png puro, sem roxo por cima */
 .hero{
   background: transparent;
   padding: 0;
@@ -51,7 +50,7 @@ body{
 
 /* MOBILE layout (logos + bimestre) */
 .hero-content{
-  display:none; /* ✅ desktop não mostra */
+  display:none;
 }
 
 /* =========================
@@ -136,29 +135,28 @@ body{
 }
 
 /* =========================
-   TABLE (4 colunas iguais ao PDF)
+   TABLE
 ========================= */
 
-/* ✅ GUTTER: espaço extra à esquerda para mostrar o badge fora da coluna
-   (sem aumentar a coluna Unit, Day) */
+/* ✅ GUTTER no desktop: espaço reservado pro badge fora da coluna */
 .sheet-wrap{
-  padding: 0 14px 14px 110px; /* ✅ 110px cria a “área do badge” */
+  padding: 0 14px 14px 110px;
 }
 
-/* ✅ O .sheet agora só segura estrutura.
-   A borda arredondada/clipping fica no .sheet-inner */
+/* container geral */
 .sheet{
   position:relative;
 }
 
-/* ✅ Aqui sim fica o round perfeito + clip do laranja */
+/* ✅ ESSA DIV segura o round TOP e BOTTOM da tabela */
 .sheet-inner{
   border-radius: 18px;
-  overflow: visible; /* ✅ agora o badge não some */
+  overflow: hidden;        /* ✅ CLIPPER do round inferior e superior */
   border: 2px solid var(--grid);
   background:#fff;
+  position: relative;
+  z-index: 1;
 }
-
 
 /* TABELA */
 .lp-table{
@@ -167,12 +165,13 @@ body{
   table-layout: fixed;
 }
 
-/* ✅ Proporções reais: Unit pequeno, Desenvolvimento maior */
+/* ✅ Proporções PDF */
 .col-unit{ width: 12%; }
 .col-content{ width: 28%; }
 .col-dev{ width: 32%; }
 .col-mat{ width: 28%; }
 
+/* HEADER LARANJA */
 .lp-table th{
   background: var(--orange);
   border-right: 2px solid var(--grid);
@@ -186,7 +185,7 @@ body{
   border-right:none;
 }
 
-/* ✅ ROUND do laranja sem precisar overflow:hidden */
+/* ✅ round do laranja */
 .lp-table thead th:first-child{
   border-top-left-radius: 16px;
 }
@@ -195,12 +194,11 @@ body{
   border-top-right-radius: 16px;
 }
 
-/* ✅ garante que o fundo laranja respeite o round */
 .lp-table thead th{
   background-clip: padding-box;
 }
 
-
+/* BODY */
 .lp-table td{
   border-right: 2px solid var(--grid);
   border-bottom: 2px solid var(--grid);
@@ -209,7 +207,8 @@ body{
   padding:0;
 }
 
-.lp-table tr:last-child td{
+/* ✅ remove linha final interna (pra não “invadir” o round inferior) */
+.lp-table tbody tr:last-child td{
   border-bottom:none;
 }
 
@@ -217,41 +216,46 @@ body{
   border-right:none;
 }
 
-/* ✅ PRIMEIRA COLUNA: só o campo Unit/Day
-   (o badge é visualmente fora, mas não some pq tem gutter) */
+/* PRIMEIRA COLUNA */
 .td-unit{
   position: relative;
 }
 
-/* ✅ Badge fora da coluna Unit, Day (lado esquerdo), agora dentro do gutter */
+/* =========================
+   BADGE (fora da coluna)
+========================= */
+
+/* ✅ badge fica FORA do clipper (.sheet-inner), então ele aparece.
+   Para isso, ele PRECISA ficar com z-index maior que o container */
 .day-badge{
   position:absolute;
-  left: -100px; /* ✅ joga pro gutter */
+  left: -92px;       /* ✅ encaixa no gutter */
   top: 0;
   height:100%;
-  width: 96px;
+  width: 86px;
   display:flex;
-  gap:8px;
+  gap:6px;
   align-items:stretch;
   padding:8px 0;
   pointer-events:none;
-  /*z-index: 5;*/
+  z-index: 999;      /* ✅ acima do clipper */
 }
 
+/* ✅ menorzinho */
 .dayNum{
-  width:58px;
+  width:52px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:42px;
+  font-size:36px;
   font-weight:900;
   color:#000;
   line-height:1;
 }
 
 .weekPill{
-  width:44px;
-  border-radius:14px;
+  width:38px;
+  border-radius:12px;
   background: var(--navy);
   color:#fff;
   display:flex;
@@ -263,9 +267,12 @@ body{
   transform: rotate(180deg);
   text-transform:uppercase;
   user-select:none;
+  font-size:12px;
 }
 
-/* Rich editable fields */
+/* =========================
+   RICH EDITABLE FIELDS
+========================= */
 .rich{
   padding:10px;
   min-height:78px;
@@ -464,9 +471,9 @@ body{
 
   .lesson-title{ font-size:34px; }
 
-  /* ✅ no mobile precisa rolar */
+  /* ✅ mobile rola a tabela */
   .sheet-wrap{
-    padding: 0 14px 14px 14px; /* remove gutter no mobile */
+    padding: 0 14px 14px 14px;
     overflow-x:auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -475,16 +482,17 @@ body{
     min-width: 760px;
   }
 
-  /* ✅ no mobile o badge fica "dentro" pra não cortar */
+  /* ✅ NO MOBILE: badge não invade Unit, Day
+     Ele fica à esquerda fora da coluna (mas visível por causa do scroll) */
   .day-badge{
-    left: 8px;
-    width: 88px;
-    pointer-events:none;
+    left: -78px;
+    width: 74px;
     opacity:.95;
   }
 
+  /* ✅ remove o padding que jogava o texto pra direita */
   .td-unit .rich{
-    padding-left: 96px; /* abre espaço pro badge no mobile */
+    padding-left: 10px;
   }
 }
 
