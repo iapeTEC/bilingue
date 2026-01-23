@@ -10,12 +10,15 @@
 <body>
   <div class="page">
 
-    <!-- HEADER (faixa roxa + imagem do topo) -->
+    <!-- HEADER -->
     <header class="hero">
+
+      <!-- ✅ DESKTOP: usa o seu header.png (sem overlay roxo) -->
       <div class="hero-bg">
-        <img class="hero-img" src="assets/header.png" alt="Header Image" onerror="this.style.display='none'">
+        <img class="hero-img" src="assets/header.png" alt="Header" onerror="this.style.display='none'">
       </div>
 
+      <!-- ✅ MOBILE: mantém layout antigo com logos e bimestre clicável -->
       <div class="hero-content">
         <div class="brand-left">
           <img src="assets/logo-left.png" alt="Logo Left" onerror="this.outerHTML='<div class=&quot;logo-fallback&quot;>Educação<br/>Adventista</div>'">
@@ -46,7 +49,7 @@
       </div>
     </header>
 
-    <!-- TOP BAR: Week selector + Share -->
+    <!-- TOP BAR -->
     <div class="top-actions">
       <button class="pill pill-week" id="weekBtn" type="button">
         <span class="tick"></span>
@@ -59,31 +62,33 @@
       </div>
     </div>
 
-    <!-- TITLE LEFT -->
+    <!-- TITLE -->
     <div class="title-row">
       <div class="lesson-title">LESSON PREP</div>
     </div>
 
-    <!-- TABLE WRAPPER -->
+    <!-- ✅ TABLE (4 COLUNAS EXATAS COMO PDF) -->
     <section class="sheet-wrap">
-  <div class="sheet">
-    <table class="lp-table">
-      <thead>
-        <tr>
-          <th class="th th-unit">Unit, Day</th>
-          <th class="th">Conteúdo</th>
-          <th class="th">Desenvolvimento da aula</th>
-          <th class="th">Materiais para a aula</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
-</section>
+      <div class="sheet">
+        <table class="lp-table">
+          <colgroup>
+            <col class="col-unit">
+            <col class="col-content">
+            <col class="col-dev">
+            <col class="col-mat">
+          </colgroup>
 
+          <thead>
+            <tr>
+              <th>Unit, Day</th>
+              <th>Conteúdo</th>
+              <th>Desenvolvimento da aula</th>
+              <th>Materiais para a aula</th>
+            </tr>
+          </thead>
 
-        <!-- ROWS -->
-        <div class="rows" id="rows"></div>
+          <tbody id="rows"></tbody>
+        </table>
       </div>
     </section>
 
@@ -96,7 +101,7 @@
     </section>
   </div>
 
-  <!-- RICH TOOLBAR (floating) -->
+  <!-- RICH TOOLBAR -->
   <div class="toolbar" id="toolbar" aria-hidden="true">
     <button class="tbtn" data-cmd="bold" title="Negrito"><b>B</b></button>
     <button class="tbtn" data-cmd="italic" title="Itálico"><i>I</i></button>
@@ -112,7 +117,7 @@
     <input type="color" class="tcolor" id="colorPicker" title="Cor do texto" />
   </div>
 
-  <!-- MODAL: Week picker -->
+  <!-- MODAL WEEK -->
   <div class="modal" id="weekModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-title">Selecionar semana</div>
@@ -132,7 +137,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Term/Bimestre picker -->
+  <!-- MODAL TERM -->
   <div class="modal" id="termModal" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-title">Selecionar bimestre</div>
@@ -157,4 +162,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
