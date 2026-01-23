@@ -23,7 +23,7 @@ body{
   background: var(--paper);
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,.10);
-  overflow:hidden;
+  overflow:hidden; /* ✅ mantém visual "documento" */
 }
 
 /* =========================
@@ -44,14 +44,14 @@ body{
 
 .hero-img{
   width:100%;
-  height:auto;          /* ✅ encaixa automaticamente */
-  display:block;        /* ✅ remove espaços estranhos */
-  object-fit: contain;  /* ✅ sem deformar */
+  height:auto;
+  display:block;
+  object-fit: contain;
 }
 
 /* MOBILE layout (logos + bimestre) */
 .hero-content{
-  display:none; /* ✅ DESKTOP não mostra (pq o PNG já é o header completo) */
+  display:none; /* ✅ desktop não mostra */
 }
 
 /* =========================
@@ -138,28 +138,35 @@ body{
 /* =========================
    TABLE (4 colunas iguais ao PDF)
 ========================= */
+
+/* ✅ GUTTER: espaço extra à esquerda para mostrar o badge fora da coluna
+   (sem aumentar a coluna Unit, Day) */
 .sheet-wrap{
-  padding: 0 14px 14px 14px;
+  padding: 0 14px 14px 110px; /* ✅ 110px cria a “área do badge” */
 }
 
-/* ✅ importante: permitir o "dia/semana" sair pra fora da tabela */
+/* ✅ O .sheet agora só segura estrutura.
+   A borda arredondada/clipping fica no .sheet-inner */
 .sheet{
+  position:relative;
+}
+
+/* ✅ Aqui sim fica o round perfeito + clip do laranja */
+.sheet-inner{
   border-radius: 18px;
+  overflow:hidden; /* ✅ garante round do laranja */
   border: 2px solid var(--grid);
   background:#fff;
-  overflow: visible; /* ✅ permite o badge ficar fora do grid */
 }
 
+/* TABELA */
 .lp-table{
   width:100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-/* ✅ Proporções reais do PDF:
-   Unit, Day pequena
-   Desenvolvimento maior
-   Conteúdo e Materiais grandes */
+/* ✅ Proporções reais: Unit pequeno, Desenvolvimento maior */
 .col-unit{ width: 12%; }
 .col-content{ width: 28%; }
 .col-dev{ width: 32%; }
@@ -194,24 +201,24 @@ body{
   border-right:none;
 }
 
-/* ✅ PRIMEIRA COLUNA: agora ela contém APENAS o campo Unit,Day
-   O dia/semana vai aparecer fora da coluna via position absolute */
+/* ✅ PRIMEIRA COLUNA: só o campo Unit/Day
+   (o badge é visualmente fora, mas não some pq tem gutter) */
 .td-unit{
   position: relative;
 }
 
-/* ✅ “Dia e Semana” (badge fora da tabela, lado esquerdo) */
+/* ✅ Badge fora da coluna Unit, Day (lado esquerdo), agora dentro do gutter */
 .day-badge{
   position:absolute;
-  left: -120px;      /* distância pra fora da tabela */
+  left: -102px; /* ✅ joga pro gutter */
   top: 0;
   height:100%;
-  width: 90px;
+  width: 96px;
   display:flex;
   gap:8px;
   align-items:stretch;
   padding:8px 0;
-  pointer-events:none; /* ✅ não atrapalha clique no campo */
+  pointer-events:none;
 }
 
 .dayNum{
@@ -251,7 +258,6 @@ body{
   height:100%;
 }
 
-/* ✅ sem outline (outline cria “linha falsa”) */
 .rich:focus{
   box-shadow: inset 0 0 0 3px rgba(90,43,134,.18);
 }
@@ -386,7 +392,7 @@ body{
 }
 
 /* =========================
-   MOBILE (mantém o layout antigo)
+   MOBILE
 ========================= */
 @media (max-width: 560px){
   .page{
@@ -395,7 +401,6 @@ body{
     min-height:100vh;
   }
 
-  /* ✅ mobile não usa header.png */
   .hero{
     background: linear-gradient(135deg,var(--purple-1),var(--purple-2));
     padding: 18px 18px 14px 18px;
@@ -428,15 +433,6 @@ body{
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.25));
   }
 
-  .logo-fallback{
-    color:#fff;
-    font-weight:700;
-    text-align:center;
-    font-size:13px;
-    line-height:1.1;
-    opacity:.95;
-  }
-
   .hero-center{
     flex:1;
     display:flex;
@@ -445,48 +441,15 @@ body{
     gap:8px;
   }
 
-  .pill-primary{
-    background:#fff;
-    color:#111;
-    box-shadow: 0 6px 16px rgba(0,0,0,.18);
-  }
-
-  .meta{
-    width:100%;
-    color:#fff;
-    font-size:13px;
-    line-height:1.2;
-  }
-
-  .meta-line{
-    display:flex;
-    justify-content:center;
-    gap:8px;
-    margin:3px 0;
-    flex-wrap:wrap;
-  }
-
-  .meta-label{
-    font-weight:700;
-    opacity:.95;
-  }
-
-  .meta-value{
-    padding:2px 6px;
-    border-radius:6px;
-    background:rgba(255,255,255,.10);
-    min-width:120px;
-    text-align:center;
-  }
-
   .actions-right{ gap:8px; }
   .btn{ padding:10px 10px; font-size:12px; }
   .pill-week{ padding:8px 10px; font-size:12px; }
 
   .lesson-title{ font-size:34px; }
 
-  /* tabela com scroll suave */
+  /* ✅ no mobile precisa rolar */
   .sheet-wrap{
+    padding: 0 14px 14px 14px; /* remove gutter no mobile */
     overflow-x:auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -495,10 +458,16 @@ body{
     min-width: 760px;
   }
 
-  /* ✅ no mobile, manter o badge grudado na coluna (pra não cortar) */
+  /* ✅ no mobile o badge fica "dentro" pra não cortar */
   .day-badge{
-    left: -86px;
-    width: 80px;
+    left: 8px;
+    width: 88px;
+    pointer-events:none;
+    opacity:.95;
+  }
+
+  .td-unit .rich{
+    padding-left: 96px; /* abre espaço pro badge no mobile */
   }
 }
 
