@@ -4,7 +4,7 @@
 
 // Tenho que lembrar de mudar, caso necessario.
 // Cole aqui a URL do Web App do Google Apps Script (Deploy -> Web app)
-const API_URL = "https://script.google.com/macros/s/AKfycbz0X3Gs-8WC9RHSzyIa-m0I47HVxhWuLtHsbYHq5i1RooZci5JPcAbjuhGRDae6w-4gpA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzvyt0eDb58D1b9DVCoxYIiWvNa0eXIW65Apr8PpTVu2IgY2wVjzOmcY_JhlUG5NwyjWw/exec";
 
 // You can override the GAS URL by adding ?gas=YOUR_URL to the page URL,
 // or by setting window.GAS_URL before this script runs.
@@ -40,12 +40,12 @@ const CLASSES = [
    STATE
 ========================= */
 const state = {
-  term: "1",
-  className: "Infantil 3", // ✅ NOVO
-  teacher: "Bruno Agostinho",
+  term: "",
+  className: "", // ✅ NOVO
+  teacher: "",
   weekStart: null, // Date object (Mon)
   weekLabel: "(26 a 30 de Janeiro)",
-  dateText: "26 a 30 de Janeiro",
+  dateText: "",
   rows: [],
   coordMessage: "",
   isViewMode: document.body.classList.contains("view-mode"),
@@ -523,94 +523,90 @@ function makeKey(){
   return `${state.term}_${toISODate(state.weekStart)}_${sanitizeKeyPart(state.className)}`;
 }
 
-async function loadFromBackend(){
-  if(!GAS_URL || GAS_URL.includes("COLE_AQUI")) return;
+async function loadFromBackend(key) {
+  // JSONP avoids CORS issues with Google Apps Script web apps on GitHub Pages.
+  const cb = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+  const url =
+    GAS_URL +
+    "?action=get" +
+    "&key=" + encodeURIComponent(key || "") +
+    "&callback=" + encodeURIComponent(cb) +
+    "&ts=" + Date.now(); // cache-bust
 
-  const key = makeKey();
-  const url = `${GAS_URL}?action=get&key=${encodeURIComponent(key)}&ts=${Date.now()}`;
+  return await new Promise((resolve, reject) => {
+    const script = document.createElement("script");
 
-  try{
-    const res = await fetch(url, { method:"GET" });
-    const data = await res.json();
-
-    // ✅ Se não existe payload, mantém tudo branco
-    if(!data || !data.ok || !data.payload){
-      return;
+    function cleanup() {
+      try { delete window[cb]; } catch (_) { window[cb] = undefined; }
+      if (script && script.parentNode) script.parentNode.removeChild(script);
     }
 
-    const p = data.payload;
+    window[cb] = (resp) => {
+      cleanup();
+      if (resp && resp.ok) return resolve(resp.payload || null);
+      return reject(new Error((resp && resp.error) || "Backend error"));
+    };
 
-    state.teacher = p.teacher || state.teacher;
-    state.dateText = p.dateText || state.dateText;
-    state.coordMessage = p.coordMessage || "";
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Failed to load from backend (script error)."));
+    };
 
-    // rows
-    if(Array.isArray(p.rows) && p.rows.length === 5){
-      state.rows = p.rows;
-    }
-
-    hydrateUI();
-
-  }catch(err){
-    console.warn("Falha ao carregar:", err);
-  }
+    script.src = url;
+    document.head.appendChild(script);
+  });
 }
 
-async function saveToBackend(){
-  if(!GAS_URL || GAS_URL.includes("COLE_AQUI")) {
-    alert("Cole a URL do Web App do Apps Script em app.js (GAS_URL / API_URL).");
-    return false;
-  }
 
-  const key = makeKey();
-
-  const payload = {
-    key,
-    term: state.term,
-    className: state.className,
-    weekStart: toISODate(state.weekStart),
-    teacher: state.teacher,
-    dateText: state.dateText,
-    rows: state.rows,
-    coordMessage: state.coordMessage,
-  };
-
-  const url = `${GAS_URL}?action=save&data=${encodeURIComponent(JSON.stringify(payload))}&ts=${Date.now()}`;
-
+function saveToBackend(payload) {
+  // Cross-origin POST via hidden iframe avoids CORS, and avoids URL-length limits.
   try {
-    // ✅ 1) tenta o modo normal (desktop geralmente funciona)
-    try {
-      const res = await fetch(url, {
-        method: "GET",
-        cache: "no-cache",
-        keepalive: true,
-        mode: "cors",
-      });
-
-      // Se conseguir ler, perfeito
-      await res.text();
-      console.log("✅ Salvou (CORS ok)");
-      return true;
-
-    } catch (err) {
-      // ✅ 2) fallback MOBILE: envia mesmo que CORS bloqueie resposta
-      await fetch(url, {
-        method: "GET",
-        cache: "no-cache",
-        keepalive: true,
-        mode: "no-cors",
-      });
-
-      console.log("✅ Salvou (fallback no-cors)");
-      return true;
+    const iframeName = "gas_save_iframe";
+    let iframe = document.getElementById(iframeName);
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = iframeName;
+      iframe.name = iframeName;
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
     }
 
-  } catch (e) {
-    console.error("Falha ao salvar:", e);
-    alert("Falha ao salvar: verifique CORS/Deploy");
-    return false;
+    const form = document.createElement("form");
+    form.style.display = "none";
+    form.method = "POST";
+    form.action = GAS_URL;
+    form.target = iframeName;
+
+    const inAction = document.createElement("input");
+    inAction.type = "hidden";
+    inAction.name = "action";
+    inAction.value = "save";
+
+    const inData = document.createElement("input");
+    inData.type = "hidden";
+    inData.name = "data";
+    inData.value = JSON.stringify(payload || {});
+
+    const inTs = document.createElement("input");
+    inTs.type = "hidden";
+    inTs.name = "ts";
+    inTs.value = String(Date.now());
+
+    form.appendChild(inAction);
+    form.appendChild(inData);
+    form.appendChild(inTs);
+
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(() => {
+      try { form.remove(); } catch (_) {}
+    }, 0);
+  } catch (err) {
+    console.warn("saveToBackend failed:", err);
   }
 }
+
 
 
 /* =========================
