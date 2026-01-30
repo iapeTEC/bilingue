@@ -18,6 +18,9 @@
 ========================= */
 const API_URL = "https://script.google.com/macros/s/AKfycbz0X3Gs-8WC9RHSzyIa-m0I47HVxhWuLtHsbYHq5i1RooZci5JPcAbjuhGRDae6w-4gpA/exec";
 
+// Backward-compat alias: some functions still reference GAS_URL
+const GAS_URL = API_URL;
+
 const WEEKDAYS = [
   { key: "SEG", label: "SEG" },
   { key: "TER", label: "TER" },
