@@ -16,7 +16,7 @@
 /* =========================
    CONFIG
 ========================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbzlRaBpUF9281Srwz5ToaKxyrg281syqaVbkYm7pFtoMVApsqzS0tOffBlcinehas2C8g/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz0X3Gs-8WC9RHSzyIa-m0I47HVxhWuLtHsbYHq5i1RooZci5JPcAbjuhGRDae6w-4gpA/exec";
 
 const WEEKDAYS = [
   { key: "SEG", label: "SEG" },
