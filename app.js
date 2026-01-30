@@ -3,14 +3,14 @@
    - Backend: Google Apps Script (API_URL)
    - Front: GitHub Pages
    - Features:
-     Term picker
-      Week picker + arrows
-      Class picker (turmas)
-      Rich text formatting toolbar
-      View mode (read-only)
-      Local cache (instant load)
-      Warmup (reduce cold start)
-      Mobile-safe share (WhatsApp)
+     ✅ Term picker
+     ✅ Week picker + arrows
+     ✅ Class picker (turmas)
+     ✅ Rich text formatting toolbar
+     ✅ View mode (read-only)
+     ✅ Local cache (instant load)
+     ✅ Warmup (reduce cold start)
+     ✅ Mobile-safe share (WhatsApp)
 ========================= */
 
 /* =========================
@@ -247,7 +247,7 @@ function renderRows(){
     des.className = "rich";
     des.dataset.field = "desenvolvimento";
     des.dataset.index = idx;
-    des.innerHTML = r.desenvolvimento || "";
+    des.innerText = r.desenvolvimento || "";
     if(!state.isViewMode) des.contentEditable = "true";
     td3.appendChild(des);
 
@@ -257,7 +257,7 @@ function renderRows(){
     mat.className = "rich";
     mat.dataset.field = "materiais";
     mat.dataset.index = idx;
-    mat.innerHTML = r.materiais || "";
+    mat.innerText = r.materiais || "";
     if(!state.isViewMode) mat.contentEditable = "true";
     td4.appendChild(mat);
 
@@ -283,13 +283,22 @@ function hookEditListeners(){
       const idx = Number(el.dataset.index);
       const field = el.dataset.field;
       if(Number.isFinite(idx) && field){
-        state.rows[idx][field] = el.innerHTML;
+        const txt = (el.innerText || "").replace(/\u00A0/g, " ").replace(/\s+$/g, "");
+        state.rows[idx][field] = txt;
         // keep local cache warm while typing
         saveToLocalCache(buildPayload());
       }
     });
 
-    el.addEventListener("focus", () => showToolbar());
+    
+
+    el.addEventListener("paste", (e) => {
+      // Force plain-text paste to avoid giant HTML blobs (e.g., copying from ChatGPT)
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData("text");
+      document.execCommand("insertText", false, text);
+    });
+el.addEventListener("focus", () => showToolbar());
   });
 
   const coord = document.getElementById("coordMessage");
@@ -555,82 +564,69 @@ function buildPayload(){
 /* =========================
    BACKEND (load/save)
 ========================= */
-async function loadFromBackend(){
-  if(!API_URL || API_URL.includes("COLE_AQUI")) return;
+async function loadFromBackend(opts = {}) {
+  const { silent = false } = opts;
 
-  setLoading(true);
+  try {
+    if (!silent) setLoading(true);
 
-  const key = makeKey();
-  const url = `${API_URL}?action=get&key=${encodeURIComponent(key)}`;
+    const key = makeKey(currentTerm, currentWeekStart, currentClass);
+    const url = `${CONFIG.BACKEND_URL}?action=load&key=${encodeURIComponent(key)}`;
 
-  try{
-    const res = await fetch(url, { method:"GET", cache:"no-cache", mode:"cors" });
-    const data = await res.json();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP " + res.status);
 
-    if(data && data.ok && data.payload){
-      const p = data.payload;
-
-      // Apply backend payload
-      state.teacher = p.teacher || state.teacher;
-      state.dateText = p.dateText || state.dateText;
-      state.coordMessage = p.coordMessage || "";
-
-      if(Array.isArray(p.rows) && p.rows.length === 5){
-        state.rows = p.rows;
-      }
-
-      // Save to local cache (instant next time)
-      saveToLocalCache(buildPayload());
-
-      hydrateUI();
+    const json = await res.json();
+    if (!json || !json.ok || !json.data) {
+      if (!silent) console.log("ℹ️ Sem dados no backend");
+      return null;
     }
-  }catch(err){
-    // backend may be sleeping/cold or CORS may fail; we still keep local cache
-    console.warn("Falha ao carregar do backend:", err);
-  }finally{
-    setLoading(false);
+
+    applyPayloadToUI(json.data);
+    saveToLocalCache(key, json.data);
+
+    if (!silent) console.log("✅ Carregado do backend");
+    return json.data;
+  } catch (err) {
+    if (!silent) console.warn("⚠️ Backend load falhou, mantendo local:", err);
+    return null;
+  } finally {
+    if (!silent) setLoading(false);
   }
 }
 
-async function saveToBackend(){
-  if(!API_URL || API_URL.includes("COLE_AQUI")) {
-    alert("Cole a URL do Web App do Apps Script em app.js (API_URL).");
-    return false;
-  }
+async function saveToBackend(arg) {
+  // Accept either a click event or a payload object
+  if (arg && typeof arg === "object" && "preventDefault" in arg) arg.preventDefault();
+  const payload = (arg && typeof arg === "object" && arg.key) ? arg : buildPayload();
 
-  const payload = buildPayload();
-  const url = `${API_URL}?action=save&data=${encodeURIComponent(JSON.stringify(payload))}`;
+  const body = JSON.stringify({ action: "save", data: payload });
 
-  // Save locally first (instant UX)
-  saveToLocalCache(payload);
-
+  // 1) Best path: simple CORS POST (text/plain body -> no preflight)
   try {
-    // ✅ 1) normal
-    try {
-      const res = await fetch(url, {
-        method: "GET",
-        cache: "no-cache",
-        keepalive: true,
-        mode: "cors",
-      });
-      await res.text();
-      showToast("✅ Salvo!");
-      return true;
-
-    } catch (err) {
-      // ✅ 2) fallback: send anyway (mobile)
-      await fetch(url, {
-        method: "GET",
-        cache: "no-cache",
-        keepalive: true,
-        mode: "no-cors",
-      });
-      showToast("✅ Salvo!");
+    const res = await fetch(GAS_URL, { method: "POST", mode: "cors", body });
+    const text = await res.text();
+    const json = (() => { try { return JSON.parse(text); } catch { return null; } })();
+    if (res.ok && (json?.ok || json?.status === "ok")) {
+      console.log("[SAVE] ok (POST cors)");
       return true;
     }
-  } catch (e) {
-    console.warn("Falha ao salvar:", e);
-    showToast("⚠️ Não salvou (verifique deploy)");
+    if (res.ok) {
+      console.log("[SAVE] ok (POST cors) response:", text);
+      return true;
+    }
+    console.warn("[SAVE] POST cors error:", res.status, text);
+  } catch (err) {
+    console.warn("[SAVE] POST cors failed:", err);
+  }
+
+  // 2) Fallback: POST no-cors (can't read response, but usually arrives)
+  try {
+    await fetch(GAS_URL, { method: "POST", mode: "no-cors", body });
+    console.log("[SAVE] ok (fallback POST no-cors)");
+    return true;
+  } catch (err) {
+    console.warn("[SAVE] fallback no-cors failed:", err);
     return false;
   }
 }
@@ -706,7 +702,7 @@ function loadLessonFast(){
   }
 
   // 2) backend async (update if exists)
-  loadFromBackend();
+  loadFromBackend({ silent: !!cached });
 }
 
 /* =========================
