@@ -523,7 +523,7 @@ function makeKey(){
   return `${state.term}_${toISODate(state.weekStart)}_${sanitizeKeyPart(state.className)}`;
 }
 
-async /* =========================
+/* =========================
    BACKEND (load/save)
 ========================= */
 
