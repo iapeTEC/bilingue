@@ -1,25 +1,15 @@
 /* =========================
-   LESSON PREP - APP.JS (FULL)
-   - Backend: Google Apps Script (API_URL)
-   - Front: GitHub Pages
-   - Features:
-      Term picker -ok
-      Week picker + arrows - ok
-      Class picker (turmas) - ok
-      Rich text formatting toolbar - ok
-      View mode (read-only) - ok
-      Local cache (instant load) - ok
-      Warmup (reduce cold start) - ok
-      Mobile-safe share (WhatsApp) - ok
-========================= */
-
-/* =========================
    CONFIG
 ========================= */
+
+// Tenho que lembrar de mudar, caso necessario.
+// Cole aqui a URL do Web App do Google Apps Script (Deploy -> Web app)
 const API_URL = "https://script.google.com/macros/s/AKfycbzoKDUDc3H7T2UHvtX6_MUThqeEc5wlGdQb59uQEF_4-VLEYyI3z9KrV7w09eNswHEiMA/exec";
 
-// Backward-compat alias: some functions still reference GAS_URL
-const GAS_URL = API_URL;
+// You can override the GAS URL by adding ?gas=YOUR_URL to the page URL,
+// or by setting window.GAS_URL before this script runs.
+const _qs = new URLSearchParams(window.location.search);
+const GAS_URL = _qs.get("gas") || window.GAS_URL || API_URL;
 
 const WEEKDAYS = [
   { key: "SEG", label: "SEG" },
@@ -27,6 +17,11 @@ const WEEKDAYS = [
   { key: "QUA", label: "QUA" },
   { key: "QUI", label: "QUI" },
   { key: "SEX", label: "SEX" },
+];
+
+const MONTHS_PT = [
+  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
 ];
 
 const CLASSES = [
@@ -41,21 +36,16 @@ const CLASSES = [
   "6 Ano",
 ];
 
-const MONTHS_PT = [
-  "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
-];
-
 /* =========================
    STATE
 ========================= */
 const state = {
-  term: "1",
-  className: CLASSES[0],
-  teacher: "Bruno Agostinho",
-  weekStart: null,  // Monday Date object
+  term: "",
+  className: "", // ✅ NOVO
+  teacher: "",
+  weekStart: null, // Date object (Mon)
   weekLabel: "(26 a 30 de Janeiro)",
-  dateText: "26 a 30 de Janeiro",
+  dateText: "",
   rows: [],
   coordMessage: "",
   isViewMode: document.body.classList.contains("view-mode"),
@@ -84,22 +74,33 @@ function mondayOf(date){
   return d;
 }
 
-function addDays(date, n){
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
-}
+function businessWeeksOfMonth(year, monthIndex){
+  const first = new Date(year, monthIndex, 1);
+  const last = new Date(year, monthIndex + 1, 0);
+  const weeks = [];
 
-function stripAccents(str){
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
+  let cursor = mondayOf(first);
 
-function slugifyKey(str){
-  return stripAccents(String(str))
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+  while(cursor <= last){
+    const mon = new Date(cursor);
+    const fri = new Date(cursor);
+    fri.setDate(fri.getDate() + 4);
+
+    const anyInside =
+      (mon.getMonth() === monthIndex) ||
+      (new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+1).getMonth() === monthIndex) ||
+      (new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+2).getMonth() === monthIndex) ||
+      (new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+3).getMonth() === monthIndex) ||
+      (fri.getMonth() === monthIndex);
+
+    if(anyInside){
+      const label = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[monthIndex]})`;
+      weeks.push({ weekStart: mon, label });
+    }
+
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return weeks;
 }
 
 function getQueryParams(){
@@ -117,66 +118,25 @@ function setQueryParams(obj){
 }
 
 function defaultWeekIfNone(){
-  return mondayOf(new Date());
+  const today = new Date();
+  return mondayOf(today);
+}
+
+function sanitizeKeyPart(s){
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
 }
 
 /* =========================
-   KEY (term + week + class)
-========================= */
-function makeKey(){
-  const week = state.weekStart ? toISODate(state.weekStart) : "no_week";
-  const cls = slugifyKey(state.className || "no_class");
-  return `${state.term}_${week}_${cls}`;
-}
-
-/* =========================
-   LOCAL CACHE (instant load)
-========================= */
-function cacheKey(){
-  return `LP_CACHE_${makeKey()}`;
-}
-
-function loadFromLocalCache(){
-  // cache desativado: sempre puxar da planilha
-  return null;
-}
-
-function saveToLocalCache(payload){
-  // cache desativado: sempre puxar da planilha
-  return;
-}
-
-/* =========================
-   UI: LOADING + TOAST
-========================= */
-function setLoading(isLoading){
-  document.body.classList.toggle("is-loading", !!isLoading);
-}
-
-function showToast(text){
-  const t = document.createElement("div");
-  t.textContent = text;
-  t.style.position = "fixed";
-  t.style.left = "50%";
-  t.style.bottom = "18px";
-  t.style.transform = "translateX(-50%)";
-  t.style.background = "rgba(15, 23, 42, 0.92)";
-  t.style.color = "#fff";
-  t.style.padding = "10px 14px";
-  t.style.borderRadius = "14px";
-  t.style.fontWeight = "800";
-  t.style.boxShadow = "0 10px 24px rgba(0,0,0,.25)";
-  t.style.zIndex = "99999";
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(), 1600);
-}
-
-/* =========================
-   TABLE DATA
+   RENDER TABLE
 ========================= */
 function buildInitialRows(weekStart){
-  return WEEKDAYS.map((w, idx) => {
-    const d = addDays(weekStart, idx);
+  const rows = WEEKDAYS.map((w, idx) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + idx);
     return {
       date: toISODate(d),
       weekday: w.label,
@@ -187,11 +147,9 @@ function buildInitialRows(weekStart){
       materiais: "",
     };
   });
+  return rows;
 }
 
-/* =========================
-   RENDER TABLE
-========================= */
 function renderRows(){
   const rowsEl = document.getElementById("rows");
   if(!rowsEl) return;
@@ -201,12 +159,13 @@ function renderRows(){
   state.rows.forEach((r, idx) => {
     const tr = document.createElement("tr");
 
-    // COL 1: Unit, Day + badge (day number + weekday) OUTSIDE
+    // ✅ COL 1: Unit, Day
     const tdUnit = document.createElement("td");
     tdUnit.className = "td-unit";
 
     const badge = document.createElement("div");
     badge.className = "day-badge";
+    badge.setAttribute("aria-hidden","true");
 
     const dayNum = document.createElement("div");
     dayNum.className = "dayNum";
@@ -229,7 +188,7 @@ function renderRows(){
     tdUnit.appendChild(badge);
     tdUnit.appendChild(unitText);
 
-    // COL 2
+    // ✅ COL 2
     const td2 = document.createElement("td");
     const conteudo = document.createElement("div");
     conteudo.className = "rich";
@@ -239,23 +198,23 @@ function renderRows(){
     if(!state.isViewMode) conteudo.contentEditable = "true";
     td2.appendChild(conteudo);
 
-    // COL 3
+    // ✅ COL 3
     const td3 = document.createElement("td");
     const des = document.createElement("div");
     des.className = "rich";
     des.dataset.field = "desenvolvimento";
     des.dataset.index = idx;
-    des.innerText = r.desenvolvimento || "";
+    des.innerHTML = r.desenvolvimento || "";
     if(!state.isViewMode) des.contentEditable = "true";
     td3.appendChild(des);
 
-    // COL 4
+    // ✅ COL 4
     const td4 = document.createElement("td");
     const mat = document.createElement("div");
     mat.className = "rich";
     mat.dataset.field = "materiais";
     mat.dataset.index = idx;
-    mat.innerText = r.materiais || "";
+    mat.innerHTML = r.materiais || "";
     if(!state.isViewMode) mat.contentEditable = "true";
     td4.appendChild(mat);
 
@@ -281,54 +240,44 @@ function hookEditListeners(){
       const idx = Number(el.dataset.index);
       const field = el.dataset.field;
       if(Number.isFinite(idx) && field){
-        const txt = (el.innerText || "").replace(/\u00A0/g, " ").replace(/\s+$/g, "");
-        state.rows[idx][field] = txt;
-        // keep local cache warm while typing
-        saveToLocalCache(buildPayload());
+        state.rows[idx][field] = el.innerHTML;
       }
     });
 
-    
-
-    el.addEventListener("paste", (e) => {
-      // Force plain-text paste to avoid giant HTML blobs (e.g., copying from ChatGPT)
-      e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData("text");
-      document.execCommand("insertText", false, text);
-    });
-el.addEventListener("focus", () => showToolbar());
+    // ✅ mostra sempre no focus
+    el.addEventListener("focus", () => showToolbar());
   });
 
+  // COORD MESSAGE
   const coord = document.getElementById("coordMessage");
   if(coord && coord.getAttribute("contenteditable") === "true"){
     coord.addEventListener("focus", () => showToolbar());
     coord.addEventListener("input", () => {
       state.coordMessage = coord.innerHTML;
-      saveToLocalCache(buildPayload());
     });
   }
 
+  // TEACHER
   const teacher = document.getElementById("teacherName");
   if(teacher && teacher.getAttribute("contenteditable") === "true"){
     teacher.addEventListener("focus", () => showToolbar());
     teacher.addEventListener("input", () => {
       state.teacher = teacher.innerText.trim();
-      saveToLocalCache(buildPayload());
     });
   }
 
+  // DATE FIELD
   const dateField = document.getElementById("dateField");
   if(dateField && dateField.getAttribute("contenteditable") === "true"){
     dateField.addEventListener("focus", () => showToolbar());
     dateField.addEventListener("input", () => {
       state.dateText = dateField.innerText.trim();
-      saveToLocalCache(buildPayload());
     });
   }
 }
 
 /* =========================
-   TOOLBAR (formatting)
+   TOOLBAR
 ========================= */
 function showToolbar(){
   const tb = document.getElementById("toolbar");
@@ -349,7 +298,7 @@ function initToolbar(){
   if(!tb) return;
 
   tb.addEventListener("mousedown", (e) => {
-    e.preventDefault(); // keep focus in editable
+    e.preventDefault();
   });
 
   tb.querySelectorAll("[data-cmd]").forEach(btn => {
@@ -372,6 +321,11 @@ function initToolbar(){
   }
 }
 
+
+/* =========================
+  Toolbar auto hide
+========================= */
+
 function initToolbarAutoHide(){
   document.addEventListener("pointerdown", (e) => {
     const tb = document.getElementById("toolbar");
@@ -380,10 +334,14 @@ function initToolbarAutoHide(){
     const clickedToolbar = tb.contains(e.target);
     const clickedRich = e.target.closest?.(".rich");
 
+    // ✅ se clicou no toolbar ou em um campo rich -> NÃO esconde
     if(clickedToolbar || clickedRich) return;
+
+    // ✅ clicou fora -> esconde
     hideToolbar();
   });
 }
+
 
 /* =========================
    MODALS
@@ -403,41 +361,79 @@ function closeModal(modalId){
 }
 
 /* =========================
-   WEEK PICKER (modal) + ARROWS
+   CLASS PICKER ✅ NOVO
 ========================= */
-function businessWeeksOfMonth(year, monthIndex){
-  const first = new Date(year, monthIndex, 1);
-  const last = new Date(year, monthIndex + 1, 0);
-  const weeks = [];
-  let cursor = mondayOf(first);
+function initClassPicker(){
+  const classBtn = document.getElementById("classBtn");
+  const classSelect = document.getElementById("classSelect");
+  if(!classBtn || !classSelect) return;
 
-  while(cursor <= last){
-    const mon = new Date(cursor);
-    const fri = addDays(cursor, 4);
+  // popular select
+  classSelect.innerHTML = "";
+  CLASSES.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    classSelect.appendChild(opt);
+  });
+  classSelect.value = state.className;
 
-    // keep if any day of Mon-Fri touches the month
-    const anyInside = [0,1,2,3,4].some(i => addDays(mon,i).getMonth() === monthIndex);
+  const classLabel = document.getElementById("classLabel");
+  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
 
-    if(anyInside){
-      const label = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[monthIndex]})`;
-      weeks.push({ weekStart: mon, label });
-    }
+  // view mode: só mostra, não abre modal
+  if(state.isViewMode) return;
 
-    cursor = addDays(cursor, 7);
-  }
-  return weeks;
+  classBtn.addEventListener("click", () => openModal("classModal"));
+
+  document.getElementById("closeClassModal")?.addEventListener("click", () => closeModal("classModal"));
+
+  document.getElementById("applyClass")?.addEventListener("click", async () => {
+    const selected = classSelect.value || CLASSES[0];
+    await setClass(selected);
+    closeModal("classModal");
+  });
 }
 
+async function setClass(newClass){
+  state.className = newClass;
+
+  const classLabel = document.getElementById("classLabel");
+  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+
+  // ✅ Atualiza URL (term + week + class)
+  setQueryParams({
+    term: state.term,
+    week: toISODate(state.weekStart),
+    class: state.className,
+  });
+
+  // ✅ MUITO IMPORTANTE:
+  // ao trocar de turma, já limpa tudo IMEDIATAMENTE pra lançar
+  state.rows = buildInitialRows(state.weekStart);
+  state.coordMessage = ""; // (opcional, mas recomendado por turma)
+
+  // mostra em branco na hora
+  hydrateUI();
+
+  // depois tenta buscar se existe algo salvo pra essa turma
+  await loadFromBackend();
+}
+
+
+/* =========================
+   WEEK + TERM PICKERS
+========================= */
 function initWeekPicker(){
   const weekBtn = document.getElementById("weekBtn");
+  const weekModal = document.getElementById("weekModal");
   const monthSelect = document.getElementById("monthSelect");
   const weekSelect = document.getElementById("weekSelect");
 
-  if(!weekBtn || !monthSelect || !weekSelect) return;
+  if(!weekBtn || !weekModal || !monthSelect || !weekSelect) return;
   if(state.isViewMode) return;
 
   const now = new Date();
-  monthSelect.innerHTML = "";
   for(let i=0; i<12; i++){
     const opt = document.createElement("option");
     opt.value = String(i);
@@ -468,36 +464,18 @@ function initWeekPicker(){
 
   document.getElementById("applyWeek")?.addEventListener("click", async () => {
     const iso = weekSelect.value;
-    const newMon = mondayOf(fromISODate(iso));
-    await setWeek(newMon, { silent:false });
+    const newMon = fromISODate(iso);
+    await setWeek(newMon);
     closeModal("weekModal");
   });
 }
 
-function initWeekArrows(){
-  const prev = document.getElementById("prevWeekBtn");
-  const next = document.getElementById("nextWeekBtn");
-  if(!prev || !next) return;
-  if(state.isViewMode) return;
-
-  prev.addEventListener("click", async () => {
-    const newMon = addDays(state.weekStart, -7);
-    await setWeek(newMon, { silent:true });
-  });
-
-  next.addEventListener("click", async () => {
-    const newMon = addDays(state.weekStart, 7);
-    await setWeek(newMon, { silent:true });
-  });
-}
-
-/* =========================
-   TERM PICKER
-========================= */
 function initTermPicker(){
   const termBtn = document.getElementById("termBtn");
+  const termModal = document.getElementById("termModal");
   const termSelect = document.getElementById("termSelect");
-  if(!termBtn || !termSelect) return;
+
+  if(!termBtn || !termModal || !termSelect) return;
   if(state.isViewMode) return;
 
   termBtn.addEventListener("click", () => openModal("termModal"));
@@ -505,132 +483,165 @@ function initTermPicker(){
 
   document.getElementById("applyTerm")?.addEventListener("click", async () => {
     state.term = termSelect.value;
-    setQueryParams({ term: state.term, week: toISODate(state.weekStart), class: state.className });
-    hydrateUI();
+    document.getElementById("termLabel").textContent = `${state.term}º Bimestre - LIVRO/TURMA`;
+    setQueryParams({ term: state.term, class: state.className, week: toISODate(state.weekStart) });
+    await loadFromBackend();
     closeModal("termModal");
-    // fast load: local cache instantly + backend async
-    loadLessonFast();
   });
 }
 
 /* =========================
-   CLASS PICKER
+   Setas grandes de calendario
 ========================= */
-function initClassPicker(){
-  const classBtn = document.getElementById("classBtn");
-  const classSelect = document.getElementById("classSelect");
-  if(!classBtn || !classSelect) return;
-  if(state.isViewMode) return;
 
-  classSelect.innerHTML = "";
-  CLASSES.forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    classSelect.appendChild(opt);
+function initWeekArrows(){
+  const prevBtn = document.getElementById("prevWeekBtn");
+  const nextBtn = document.getElementById("nextWeekBtn");
+
+  if(!prevBtn || !nextBtn) return;
+
+  prevBtn.addEventListener("click", async () => {
+    const d = new Date(state.weekStart);
+    d.setDate(d.getDate() - 7);
+    await setWeek(d);
   });
-  classSelect.value = state.className;
 
-  classBtn.addEventListener("click", () => openModal("classModal"));
-  document.getElementById("closeClassModal")?.addEventListener("click", () => closeModal("classModal"));
-
-  document.getElementById("applyClass")?.addEventListener("click", async () => {
-    state.className = classSelect.value;
-    setQueryParams({ term: state.term, week: toISODate(state.weekStart), class: state.className });
-    closeModal("classModal");
-    hydrateUI();
-    loadLessonFast();
+  nextBtn.addEventListener("click", async () => {
+    const d = new Date(state.weekStart);
+    d.setDate(d.getDate() + 7);
+    await setWeek(d);
   });
 }
 
-/* =========================
-   PAYLOAD BUILDER
-========================= */
-function buildPayload(){
-  return {
-    key: makeKey(),
-    term: state.term,
-    className: state.className,
-    weekStart: toISODate(state.weekStart),
-    teacher: state.teacher,
-    dateText: state.dateText,
-    rows: state.rows,
-    coordMessage: state.coordMessage,
-  };
-}
 
 /* =========================
    BACKEND (load/save)
 ========================= */
-async function loadFromBackend(opts = {}) {
-  const { silent = false } = opts;
 
-  try {
-    if (!silent) setLoading(true);
+function makeKey(){
+  // ✅ key agora inclui turma
+  return `${state.term}_${toISODate(state.weekStart)}_${sanitizeKeyPart(state.className)}`;
+}
 
-    const key = makeKey(currentTerm, currentWeekStart, currentClass);
-    const url = `${CONFIG.BACKEND_URL}?action=load&key=${encodeURIComponent(key)}`;
+async /* =========================
+   BACKEND (load/save)
+========================= */
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("HTTP " + res.status);
+// JSONP load (bypasses CORS on GitHub Pages)
+async function loadFromBackend(){
+  const key = makeKey();
 
-    const json = await res.json();
-    if (!json || !json.ok || !json.data) {
-      if (!silent) console.log("ℹ️ Sem dados no backend");
+  const cb = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random()*1e6);
+  const url = GAS_URL
+    + "?action=get"
+    + "&key=" + encodeURIComponent(key)
+    + "&callback=" + encodeURIComponent(cb)
+    + "&ts=" + Date.now(); // cache-bust
+
+  try{
+    const payload = await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+
+      function cleanup(){
+        try { delete window[cb]; } catch(_) { window[cb] = undefined; }
+        if(script && script.parentNode) script.parentNode.removeChild(script);
+      }
+
+      window[cb] = (resp) => {
+        cleanup();
+        if(resp && resp.ok) return resolve(resp.payload || null);
+        return reject(new Error((resp && resp.error) || "Backend error"));
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("Failed to load from backend (script error)."));
+      };
+
+      script.src = url;
+      document.head.appendChild(script);
+    });
+
+    if(payload){
+      state.teacher = payload.teacher || state.teacher || "";
+      state.dateText = payload.dateText || state.dateText || "";
+      state.rows = Array.isArray(payload.rows) ? payload.rows : (state.rows || []);
+      state.coordMessage = payload.coordMessage || payload.coordMessageHtml || state.coordMessage || "";
+      hydrateUI();
+      console.log("[LOAD] from Sheets ok:", key);
+      return payload;
+    }else{
+      console.log("[LOAD] nothing saved yet for:", key);
       return null;
     }
-
-    applyPayloadToUI(json.data);
-    saveToLocalCache(key, json.data);
-
-    if (!silent) console.log("✅ Carregado do backend");
-    return json.data;
-  } catch (err) {
-    if (!silent) console.warn("⚠️ Backend load falhou, mantendo local:", err);
+  }catch(err){
+    console.warn("⚠️ Backend load falhou, mantendo local:", err);
     return null;
-  } finally {
-    if (!silent) setLoading(false);
   }
 }
 
-async function saveToBackend(arg) {
-  // Accept either a click event or a payload object
-  if (arg && typeof arg === "object" && "preventDefault" in arg) arg.preventDefault();
-  const payload = (arg && typeof arg === "object" && arg.key) ? arg : buildPayload();
+// Cross-origin POST via hidden iframe avoids CORS and URL-length limits.
+function saveToBackend(){
+  const payload = {
+    key: makeKey(),
+    term: state.term || "",
+    weekStart: toISODate(state.weekStart),
+    teacher: state.teacher || "",
+    dateText: state.dateText || "",
+    rows: state.rows || [],
+    coordMessage: state.coordMessage || ""
+  };
 
-  const body = JSON.stringify({ action: "save", data: payload });
-
-  // 1) Best path: simple CORS POST (text/plain body -> no preflight)
-  try {
-    const res = await fetch(GAS_URL, { method: "POST", mode: "cors", body });
-    const text = await res.text();
-    const json = (() => { try { return JSON.parse(text); } catch { return null; } })();
-    if (res.ok && (json?.ok || json?.status === "ok")) {
-      console.log("[SAVE] ok (POST cors)");
-      return true;
+  try{
+    const iframeName = "gas_save_iframe";
+    let iframe = document.getElementById(iframeName);
+    if(!iframe){
+      iframe = document.createElement("iframe");
+      iframe.id = iframeName;
+      iframe.name = iframeName;
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
     }
-    if (res.ok) {
-      console.log("[SAVE] ok (POST cors) response:", text);
-      return true;
-    }
-    console.warn("[SAVE] POST cors error:", res.status, text);
-  } catch (err) {
-    console.warn("[SAVE] POST cors failed:", err);
-  }
 
-  // 2) Fallback: POST no-cors (can't read response, but usually arrives)
-  try {
-    await fetch(GAS_URL, { method: "POST", mode: "no-cors", body });
-    console.log("[SAVE] ok (fallback POST no-cors)");
-    return true;
-  } catch (err) {
-    console.warn("[SAVE] fallback no-cors failed:", err);
-    return false;
+    const form = document.createElement("form");
+    form.style.display = "none";
+    form.method = "POST";
+    form.action = GAS_URL;
+    form.target = iframeName;
+
+    const inAction = document.createElement("input");
+    inAction.type = "hidden";
+    inAction.name = "action";
+    inAction.value = "save";
+
+    const inData = document.createElement("input");
+    inData.type = "hidden";
+    inData.name = "data";
+    inData.value = JSON.stringify(payload);
+
+    const inTs = document.createElement("input");
+    inTs.type = "hidden";
+    inTs.name = "ts";
+    inTs.value = String(Date.now());
+
+    form.appendChild(inAction);
+    form.appendChild(inData);
+    form.appendChild(inTs);
+
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(()=>{ try{ form.remove(); }catch(_){} }, 0);
+    console.log("[SAVE] posted to Sheets ok:", payload.key);
+    toast("Salvo ✅");
+  }catch(err){
+    console.warn("saveToBackend failed:", err);
+    toast("Falhou ao salvar ❌");
   }
 }
 
 /* =========================
-   HYDRATE UI
+   UI HYDRATE
 ========================= */
 function hydrateUI(){
   const weekLabel = document.getElementById("weekLabel");
@@ -638,12 +649,13 @@ function hydrateUI(){
   const teacherName = document.getElementById("teacherName");
   const coordMessage = document.getElementById("coordMessage");
   const termLabel = document.getElementById("termLabel");
-  const classLabel = document.getElementById("classLabel");
 
   if(termLabel) termLabel.textContent = `${state.term}º Bimestre - LIVRO/TURMA`;
   if(weekLabel) weekLabel.textContent = state.weekLabel;
   if(dateField) dateField.innerText = state.dateText;
   if(teacherName) teacherName.innerText = state.teacher;
+
+  const classLabel = document.getElementById("classLabel");
   if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
 
   if(coordMessage){
@@ -654,22 +666,17 @@ function hydrateUI(){
   renderRows();
 }
 
-/* =========================
-   FAST LOAD (Local cache first)
-========================= */
-function applyWeekLabels(){
-  const mon = new Date(state.weekStart);
-  const fri = addDays(state.weekStart, 4);
+async function setWeek(mondayDate){
+  state.weekStart = mondayDate;
 
-  state.weekLabel = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]})`;
+  const mon = new Date(mondayDate);
+  const fri = new Date(mondayDate);
+  fri.setDate(fri.getDate()+4);
+
+  const label = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]})`;
+  state.weekLabel = label;
   state.dateText = `${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]}`;
-}
 
-async function setWeek(mondayDate, opts = { silent:false }){
-  state.weekStart = mondayOf(mondayDate);
-  applyWeekLabels();
-
-  // Always reset to blank rows first (if no cache)
   state.rows = buildInitialRows(state.weekStart);
 
   setQueryParams({
@@ -678,29 +685,8 @@ async function setWeek(mondayDate, opts = { silent:false }){
     class: state.className,
   });
 
-  // Instant UI update
   hydrateUI();
-
-  // Load fastest possible for this (term/week/class)
-  loadLessonFast();
-}
-
-function loadLessonFast(){
-  // 1) local cache instant
-  const cached = loadFromLocalCache();
-  if(cached && Array.isArray(cached.rows) && cached.rows.length === 5){
-    state.teacher = cached.teacher || state.teacher;
-    state.dateText = cached.dateText || state.dateText;
-    state.coordMessage = cached.coordMessage || "";
-    state.rows = cached.rows;
-    hydrateUI();
-  } else {
-    // no cache -> keep blank state (already blank)
-    hydrateUI();
-  }
-
-  // 2) backend async (update if exists)
-  loadFromBackend({ silent: !!cached });
+  await loadFromBackend();
 }
 
 /* =========================
@@ -710,7 +696,9 @@ function initShare(){
   const shareBtn = document.getElementById("shareBtn");
   if(!shareBtn || state.isViewMode) return;
 
-  shareBtn.addEventListener("click", () => {
+  shareBtn.addEventListener("click", async () => {
+
+    // ✅ monta o link primeiro
     const base = window.location.origin + window.location.pathname
       .replace("index.html","")
       .replace(/\/$/,"/");
@@ -721,42 +709,70 @@ function initShare(){
     const msg = `Lesson Prep (somente leitura):\n${viewLink}`;
     const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-    // ✅ open WhatsApp immediately (mobile safe)
-    window.open(waUrl, "_blank");
+    // ✅ abre IMEDIATAMENTE (pra não ser bloqueado no mobile)
+    const win = window.open("about:blank", "_blank");
 
-    // ✅ save in background (no await)
-    saveToBackend();
+    // ✅ salva depois (não impede abrir o WhatsApp)
+    await saveToBackend();
+
+    // ✅ agora direciona a aba pro WhatsApp
+    if(win){
+      win.location.href = waUrl;
+    }else{
+      // fallback: se o navegador bloquear a aba, tenta abrir direto
+      window.location.href = waUrl;
+    }
   });
 }
 
+
 /* =========================
-   INIT STATE FROM URL
+   LOAD FROM QUERY
 ========================= */
 function applyQueryState(){
   const q = getQueryParams();
 
   if(q.term) state.term = q.term;
+  if(q.class) state.className = q.class;
 
-  if(q.class){
-    // accept exact label or slug
-    const match = CLASSES.find(c => c.toLowerCase() === String(q.class).toLowerCase());
-    state.className = match || q.class;
-  }
-
-  const w = q.week ? fromISODate(q.week) : defaultWeekIfNone();
+  let w = q.week ? fromISODate(q.week) : defaultWeekIfNone();
   state.weekStart = mondayOf(w);
 
-  applyWeekLabels();
+  const mon = new Date(state.weekStart);
+  const fri = new Date(state.weekStart);
+  fri.setDate(fri.getDate()+4);
+
+  state.weekLabel = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]})`;
+  state.dateText = `${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]}`;
+
   state.rows = buildInitialRows(state.weekStart);
+
+  setQueryParams({
+    term: state.term,
+    week: toISODate(state.weekStart),
+    class: state.className,
+  });
 }
 
 /* =========================
-   WARMUP (reduce cold start)
+   TOAST
 ========================= */
-function warmupBackend(){
-  if(!API_URL) return;
-  fetch(`${API_URL}?action=ping`, { method:"GET", cache:"no-cache", mode:"no-cors" })
-    .catch(()=>{});
+function toast(text){
+  const t = document.createElement("div");
+  t.style.position = "fixed";
+  t.style.left = "50%";
+  t.style.bottom = "90px";
+  t.style.transform = "translateX(-50%)";
+  t.style.background = "#111";
+  t.style.color = "#fff";
+  t.style.padding = "10px 12px";
+  t.style.borderRadius = "14px";
+  t.style.fontWeight = "800";
+  t.style.boxShadow = "0 10px 24px rgba(0,0,0,.25)";
+  t.style.zIndex = "99999";
+  t.textContent = text;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 1600);
 }
 
 /* =========================
@@ -767,31 +783,22 @@ async function init(){
   initToolbar();
   initToolbarAutoHide();
 
-  // set editable fields for edit mode
-  if(!state.isViewMode){
-    document.getElementById("teacherName")?.setAttribute("contenteditable","true");
-    document.getElementById("dateField")?.setAttribute("contenteditable","true");
-  }
 
   hydrateUI();
 
-  // fast: show local cache first, backend after
-  loadLessonFast();
-
   initWeekPicker();
-  initWeekArrows();
   initTermPicker();
-  initClassPicker();
+  initClassPicker(); 
   initShare();
+  initWeekArrows(); //Chama a seta de calendario
 
-  // save button
+
   const saveBtn = document.getElementById("saveBtn");
   if(saveBtn && !state.isViewMode){
     saveBtn.addEventListener("click", saveToBackend);
   }
 
-  // warm up backend on start
-  warmupBackend();
+  await loadFromBackend();
 }
 
 init();
