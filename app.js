@@ -4,7 +4,7 @@
 
 // Tenho que lembrar de mudar, caso necessario.
 // Cole aqui a URL do Web App do Google Apps Script (Deploy -> Web app)
-const API_URL = "https://script.google.com/macros/s/AKfycbzvyt0eDb58D1b9DVCoxYIiWvNa0eXIW65Apr8PpTVu2IgY2wVjzOmcY_JhlUG5NwyjWw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyekL_F3neHsqsg2vt50JC1jGZtBbkztuYZSijUrP1qStmQ-9NGO80MUBqTmMtY4h6gEA/exec";
 
 // You can override the GAS URL by adding ?gas=YOUR_URL to the page URL,
 // or by setting window.GAS_URL before this script runs.
