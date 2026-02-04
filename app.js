@@ -735,6 +735,11 @@ function applyQueryState(){
   if(q.term) state.term = q.term;
   if(q.class) state.className = q.class;
 
+  // ✅ Defaults (prevents keys like "_2026-02-09_4_ano")
+  // If URL doesn't have term/class yet, choose stable defaults so load/save keys match.
+  if(!state.term) state.term = "1";
+  if(!state.className) state.className = (CLASSES.includes("4 Ano") ? "4 Ano" : (CLASSES[0] || ""));
+
   let w = q.week ? fromISODate(q.week) : defaultWeekIfNone();
   state.weekStart = mondayOf(w);
 
