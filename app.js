@@ -130,6 +130,13 @@ function sanitizeKeyPart(s){
     .replace(/[^a-z0-9_]/g, "");
 }
 
+// Display helper (keeps stored value unchanged, only affects UI)
+function displayClassName(name){
+  const s = String(name || "").trim();
+  // "4 Ano" -> "4º Ano" (also handles "1 Ano", etc.)
+  return s.replace(/^(\d+)\s*Ano$/i, "$1º Ano");
+}
+
 /* =========================
    RENDER TABLE
 ========================= */
@@ -373,13 +380,13 @@ function initClassPicker(){
   CLASSES.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c;
-    opt.textContent = c;
+    opt.textContent = displayClassName(c);
     classSelect.appendChild(opt);
   });
   classSelect.value = state.className;
 
   const classLabel = document.getElementById("classLabel");
-  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+  if(classLabel) classLabel.textContent = `Turma: ${displayClassName(state.className)}`;
 
   // view mode: só mostra, não abre modal
   if(state.isViewMode) return;
@@ -399,7 +406,7 @@ async function setClass(newClass){
   state.className = newClass;
 
   const classLabel = document.getElementById("classLabel");
-  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+  if(classLabel) classLabel.textContent = `Turma: ${displayClassName(state.className)}`;
 
   // ✅ Atualiza URL (term + week + class)
   setQueryParams({
@@ -510,6 +517,53 @@ function initWeekArrows(){
     const d = new Date(state.weekStart);
     d.setDate(d.getDate() + 7);
     await setWeek(d);
+  });
+}
+
+/* =========================
+   CLASS ARROWS (turmas)
+========================= */
+
+function initClassArrows(){
+  const classBtn = document.getElementById("classBtn");
+  if(!classBtn) return;
+
+  // Avoid duplicates if script is reloaded
+  if(document.getElementById("prevClassBtn") || document.getElementById("nextClassBtn")) return;
+
+  const parent = classBtn.parentElement || classBtn;
+
+  const prev = document.createElement("button");
+  prev.id = "prevClassBtn";
+  prev.type = "button";
+  prev.className = "nav-btn";
+  prev.setAttribute("aria-label", "Turma anterior");
+  prev.innerHTML = "&#x276E;"; // ❮
+
+  const next = document.createElement("button");
+  next.id = "nextClassBtn";
+  next.type = "button";
+  next.className = "nav-btn";
+  next.setAttribute("aria-label", "Próxima turma");
+  next.innerHTML = "&#x276F;"; // ❯
+
+  // Insert arrows around the existing class button
+  parent.insertBefore(prev, classBtn);
+  if(classBtn.nextSibling) parent.insertBefore(next, classBtn.nextSibling);
+  else parent.appendChild(next);
+
+  if(state.isViewMode) return;
+
+  prev.addEventListener("click", async () => {
+    const idx = Math.max(0, CLASSES.indexOf(state.className));
+    const newIdx = (idx - 1 + CLASSES.length) % CLASSES.length;
+    await setClass(CLASSES[newIdx]);
+  });
+
+  next.addEventListener("click", async () => {
+    const idx = Math.max(0, CLASSES.indexOf(state.className));
+    const newIdx = (idx + 1) % CLASSES.length;
+    await setClass(CLASSES[newIdx]);
   });
 }
 
@@ -656,7 +710,7 @@ function hydrateUI(){
   if(teacherName) teacherName.innerText = state.teacher;
 
   const classLabel = document.getElementById("classLabel");
-  if(classLabel) classLabel.textContent = `Turma: ${state.className}`;
+  if(classLabel) classLabel.textContent = `Turma: ${displayClassName(state.className)}`;
 
   if(coordMessage){
     if(!state.isViewMode) coordMessage.setAttribute("contenteditable","true");
@@ -794,6 +848,7 @@ async function init(){
   initWeekPicker();
   initTermPicker();
   initClassPicker(); 
+  initClassArrows();
   initShare();
   initWeekArrows(); //Chama a seta de calendario
 
