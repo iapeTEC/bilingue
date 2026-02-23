@@ -60,6 +60,16 @@ function toISODate(d){
   return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
 }
 
+function formatWeekRangeLabel(mon, fri){
+  const sameMonth = mon.getMonth() === fri.getMonth() && mon.getFullYear() === fri.getFullYear();
+
+  if (sameMonth) {
+    return `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]})`;
+  }
+
+  return `(${mon.getDate()} de ${MONTHS_PT[mon.getMonth()]} a ${fri.getDate()} de ${MONTHS_PT[fri.getMonth()]})`;
+}
+
 function fromISODate(s){
   const [y,m,dd] = s.split("-").map(Number);
   return new Date(y, m-1, dd);
@@ -94,7 +104,7 @@ function businessWeeksOfMonth(year, monthIndex){
       (fri.getMonth() === monthIndex);
 
     if(anyInside){
-      const label = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[monthIndex]})`;
+      const label = formatWeekRangeLabel(mon, fri);
       weeks.push({ weekStart: mon, label });
     }
 
@@ -727,9 +737,9 @@ async function setWeek(mondayDate){
   const fri = new Date(mondayDate);
   fri.setDate(fri.getDate()+4);
 
-  const label = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]})`;
-  state.weekLabel = label;
-  state.dateText = `${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]}`;
+  const label = formatWeekRangeLabel(mon, fri);
+state.weekLabel = label;
+state.dateText = label.replace(/^\(|\)$/g, ""); // sem parênteses no campo DATA
 
   state.rows = buildInitialRows(state.weekStart);
 
@@ -801,8 +811,8 @@ function applyQueryState(){
   const fri = new Date(state.weekStart);
   fri.setDate(fri.getDate()+4);
 
-  state.weekLabel = `(${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]})`;
-  state.dateText = `${mon.getDate()} a ${fri.getDate()} de ${MONTHS_PT[mon.getMonth()]}`;
+  state.weekLabel = formatWeekRangeLabel(mon, fri);
+  state.dateText = state.weekLabel.replace(/^\(|\)$/g, "");
 
   state.rows = buildInitialRows(state.weekStart);
 
